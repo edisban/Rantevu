@@ -1,0 +1,36 @@
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    full_name VARCHAR(255) NOT NULL,
+    phone VARCHAR(50),
+    role VARCHAR(20) NOT NULL CHECK (role IN ('ROLE_CLIENT','ROLE_PROVIDER')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS provider_profiles (
+    id SERIAL PRIMARY KEY,
+    user_id INT UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    specialty VARCHAR(255),
+    bio TEXT,
+    address VARCHAR(255),
+    price_per_visit NUMERIC(10,2)
+);
+
+CREATE TABLE IF NOT EXISTS appointments (
+    id SERIAL PRIMARY KEY,
+    client_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    provider_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    appointment_date TIMESTAMP NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING','ACCEPTED','REJECTED','CANCELLED')),
+    notes TEXT
+);
+
+CREATE TABLE IF NOT EXISTS messages (
+    id SERIAL PRIMARY KEY,
+    sender_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    receiver_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    appointment_id INT REFERENCES appointments(id) ON DELETE SET NULL,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
