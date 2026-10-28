@@ -22,6 +22,6 @@ cd backend
 ./mvnw spring-boot:run
 ```
 
-## Next
+## License
 
-Core scaffolded. Tell me what you want to build and I'll implement it step by step.
+MIT
