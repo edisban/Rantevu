@@ -1,10 +1,11 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { api, errorMessage } from '../api'
 import type { Me, ProfileResponse, Provider } from '../types'
 import { useLang } from '../i18n'
 import { SPECIALTY_SUGGESTIONS, categoryOf } from '../categories'
 import { PersonAvatar } from '../components/ui'
-import { Alert, Autocomplete, Box, Button, CircularProgress, Container, InputAdornment, Paper, Snackbar, TextField, Typography } from '@mui/material'
+import { Alert, Autocomplete, Box, Button, CircularProgress, Container, InputAdornment, Paper, TextField, Typography } from '@mui/material'
 import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded'
 import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded'
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded'
@@ -14,7 +15,7 @@ export default function ProfilePage() {
   const { t, lang } = useLang()
   const [form, setForm] = useState<Partial<Me & Provider>>({})
   const [busy, setBusy] = useState(false)
-  const [toast, setToast] = useState('')
+  const nav = useNavigate()
   const [err, setErr] = useState('')
   const set = (k: keyof (Me & Provider), v: string | number | null) => setForm(f => ({ ...f, [k]: v }))
 
@@ -26,8 +27,9 @@ export default function ProfilePage() {
     e.preventDefault(); setBusy(true); setErr('')
     try {
       await api('/api/profile', { method: 'PUT', body: JSON.stringify(form) })
-      setToast(t('saved'))
-    } catch (ex) { setErr(errorMessage(ex)) } finally { setBusy(false) }
+      // Back to the dashboard, which shows the confirmation
+      nav('/provider/dashboard', { state: { toast: 'saved' } })
+    } catch (ex) { setErr(errorMessage(ex)); setBusy(false) }
   }
 
   const cat = categoryOf(form.specialty)
@@ -79,10 +81,6 @@ export default function ProfilePage() {
           </Paper>
         </Box>
       </Box>
-
-      <Snackbar open={!!toast} autoHideDuration={3000} onClose={() => setToast('')} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
-        <Alert severity="success" variant="filled" onClose={() => setToast('')}>{toast}</Alert>
-      </Snackbar>
     </Container>
   )
 }

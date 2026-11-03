@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { api, errorMessage } from '../api'
 import type { Appointment, ProfileResponse, Provider } from '../types'
 import { useLang } from '../i18n'
@@ -23,19 +23,24 @@ export default function ProviderDashboard() {
   const [appts, setAppts] = useState<Appointment[]>([])
   const [profile, setProfile] = useState<Provider | null | undefined>(undefined)
   const [tab, setTab] = useState(0)
-  const [toast, setToast] = useState('')
+  const location = useLocation()
+  const nav = useNavigate()
+  // Pages that redirect here (e.g. after saving the profile) can pass a message key to show
+  const [toast, setToast] = useState(() => (location.state as { toast?: string } | null)?.toast ?? '')
   const [err, setErr] = useState('')
 
   const load = () => api<Appointment[]>('/api/appointments/mine').then(setAppts).catch(e => setErr(errorMessage(e)))
   useEffect(() => {
     load()
     api<ProfileResponse>('/api/profile').then(d => setProfile(d.profile)).catch(() => setProfile(null))
+    // Clear the one-time message so a page refresh doesn't show it again
+    if (location.state) nav(location.pathname, { replace: true, state: null })
   }, [])
 
   const setStatus = async (id: number, status: string) => {
     try {
       await api(`/api/appointments/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) })
-      setToast(t('updated')); load()
+      setToast('updated'); load()
     } catch (e) { setErr(errorMessage(e)) }
   }
 
@@ -121,7 +126,7 @@ export default function ProviderDashboard() {
       </Paper>
 
       <Snackbar open={!!toast} autoHideDuration={3000} onClose={() => setToast('')} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
-        <Alert severity="success" variant="filled" onClose={() => setToast('')}>{toast}</Alert>
+        <Alert severity="success" variant="filled" onClose={() => setToast('')}>{t(toast)}</Alert>
       </Snackbar>
     </Container>
   )
