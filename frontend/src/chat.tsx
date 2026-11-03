@@ -18,8 +18,8 @@ const Ctx = createContext<ChatCtx>(null!)
 
 // Keeps one STOMP connection open while the user is signed in and fans live messages out to the UI
 export function ChatProvider({ children }: { children: ReactNode }) {
-  useLocation() // re-read the token after sign in / sign out navigations
-  const token = localStorage.getItem('token')
+  useLocation() // re-check the session after sign in / sign out navigations
+  const session = localStorage.getItem('userId')
   const [connected, setConnected] = useState(false)
   const [unread, setUnread] = useState(0)
   const listeners = useRef(new Set<Listener>())
@@ -30,11 +30,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    if (!token) { setUnread(0); return }
+    if (!session) { setUnread(0); return }
     const me = Number(localStorage.getItem('userId'))
     const client = new Client({
       brokerURL: `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`,
-      connectHeaders: { Authorization: `Bearer ${token}` },
       reconnectDelay: 4000,
       onConnect: () => {
         setConnected(true)
@@ -45,13 +44,13 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           listeners.current.forEach(l => l(m))
         })
       },
-      // A rejected token won't get better by retrying
+      // A rejected session won't get better by retrying
       onStompError: () => { void client.deactivate() },
       onWebSocketClose: () => setConnected(false),
     })
     client.activate()
     return () => { void client.deactivate(); setConnected(false) }
-  }, [token, refreshUnread])
+  }, [session, refreshUnread])
 
   const onMessage = useCallback((l: Listener) => {
     listeners.current.add(l)

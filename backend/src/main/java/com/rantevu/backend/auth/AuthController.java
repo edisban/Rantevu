@@ -1,25 +1,48 @@
 package com.rantevu.backend.auth;
 
+import com.rantevu.backend.security.AuthCookies;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
     private final AuthService service;
-    public AuthController(AuthService service) { this.service = service; }
+    private final AuthCookies cookies;
+    public AuthController(AuthService service, AuthCookies cookies) { this.service = service; this.cookies = cookies; }
 
     @PostMapping("/register/client")
     public ResponseEntity<AuthResponse> registerClient(@Valid @RequestBody ClientRegisterRequest r) {
-        return ResponseEntity.ok(service.registerClient(r));
+        return withCookie(service.registerClient(r));
     }
+
     @PostMapping("/register/provider")
     public ResponseEntity<AuthResponse> registerProvider(@Valid @RequestBody ProviderRegisterRequest r) {
-        return ResponseEntity.ok(service.registerProvider(r));
+        return withCookie(service.registerProvider(r));
     }
+
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest r) {
-        return ResponseEntity.ok(service.login(r));
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest r, HttpServletRequest request) {
+        return withCookie(service.login(r, request.getRemoteAddr()));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout() {
+        return ResponseEntity.noContent().header(HttpHeaders.SET_COOKIE, cookies.clear().toString()).build();
+    }
+
+    // Reading the token makes Spring Security send the XSRF-TOKEN cookie the frontend echoes back
+    @GetMapping("/csrf")
+    public ResponseEntity<Void> csrf(CsrfToken token) {
+        token.getToken();
+        return ResponseEntity.noContent().build();
+    }
+
+    private ResponseEntity<AuthResponse> withCookie(AuthService.Session session) {
+        return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookies.issue(session.token()).toString()).body(session.user());
     }
 }

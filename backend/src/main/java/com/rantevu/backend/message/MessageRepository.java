@@ -21,6 +21,10 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
 
     long countByReceiver_IdAndReadAtIsNull(Long receiverId);
 
+    @Modifying
+    @Query("delete from Message m where m.sender.id = :userId or m.receiver.id = :userId")
+    int deleteAllForUser(@Param("userId") Long userId);
+
     // Unread counts per sender for one receiver: rows of [senderId, count]
     @Query("select m.sender.id, count(m) from Message m where m.receiver.id = :me and m.readAt is null group by m.sender.id")
     List<Object[]> unreadBySender(@Param("me") Long me);

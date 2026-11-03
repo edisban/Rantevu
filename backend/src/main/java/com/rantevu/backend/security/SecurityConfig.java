@@ -1,32 +1,69 @@
 package com.rantevu.backend.security;
 
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.CsrfException;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import java.io.IOException;
+import java.util.List;
 
-// The frontend reaches the API through a same-origin proxy (nginx in Docker, Vite in dev), so no CORS setup is needed
 @Configuration
 public class SecurityConfig {
+    private final List<String> allowedOrigins;
+
+    // Empty by default: the frontend is served from the same origin through nginx / Vite.
+    // Set CORS_ALLOWED_ORIGINS only when the frontend lives on another domain.
+    public SecurityConfig(@Value("${app.cors.allowed-origins}") List<String> allowedOrigins) {
+        this.allowedOrigins = allowedOrigins.stream().map(String::trim).filter(s -> !s.isEmpty()).toList();
+    }
+
     @Bean
     public PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(); }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, JwtAuthFilter jwt) throws Exception {
-        http.csrf(c -> c.disable())
+        // The auth cookie is sent automatically by the browser, so state-changing requests must
+        // also carry the CSRF token (XSRF-TOKEN cookie echoed back in the X-XSRF-TOKEN header)
+        http.csrf(c -> c.spa())
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+            .headers(h -> h
+                .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'none'; frame-ancestors 'none'"))
+                .referrerPolicy(r -> r.policy(ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)))
+            .exceptionHandling(e -> e
+                .authenticationEntryPoint((req, res, ex) -> json(res, 401, "Please sign in"))
+                .accessDeniedHandler((req, res, ex) -> json(res, 403, ex instanceof CsrfException
+                    ? "Security token missing or expired. Refresh the page and try again." : "Forbidden")))
             .authorizeHttpRequests(a -> a
-                // The WebSocket handshake is open; the STOMP CONNECT frame is authenticated in WebSocketConfig
-                .requestMatchers("/api/auth/**", "/ws", "/error").permitAll()
+                .requestMatchers("/api/auth/**", "/error").permitAll()
                 .anyRequest().authenticated())
             .addFilterBefore(jwt, UsernamePasswordAuthenticationFilter.class);
+
+        if (!allowedOrigins.isEmpty()) {
+            var cors = new CorsConfiguration();
+            cors.setAllowedOrigins(allowedOrigins);
+            cors.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+            cors.setAllowedHeaders(List.of("Content-Type", "X-XSRF-TOKEN"));
+            cors.setAllowCredentials(true);
+            var source = new UrlBasedCorsConfigurationSource();
+            source.registerCorsConfiguration("/**", cors);
+            http.cors(c -> c.configurationSource(source));
+        }
         return http.build();
+    }
+
+    private static void json(HttpServletResponse res, int status, String message) throws IOException {
+        res.setStatus(status);
+        res.setContentType("application/json");
+        res.getWriter().write("{\"message\":\"" + message + "\"}");
     }
 }

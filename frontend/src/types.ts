@@ -26,7 +26,8 @@ export type Appointment = {
 export type Me = { id: number; username: string; email: string; fullName: string; phone: string | null; role: Role }
 export type ProfileResponse = { user: Me; profile: Provider | null }
 
-export type AuthResponse = { token: string; role: Role; userId: number; fullName: string }
+// The JWT itself is in an HttpOnly cookie, not in this body
+export type AuthResponse = { role: Role; userId: number; fullName: string }
 
 export type ChatMessage = { id: number; senderId: number; receiverId: number; content: string; createdAt: string; readAt: string | null }
 

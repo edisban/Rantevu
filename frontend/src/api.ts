@@ -2,15 +2,37 @@ import type { AuthResponse } from './types'
 
 type Options = { method?: string; body?: string; headers?: Record<string, string> }
 
+const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])
+
+const readCookie = (name: string) =>
+  document.cookie.split('; ').find(c => c.startsWith(name + '='))?.slice(name.length + 1)
+
+// The login token lives in an HttpOnly cookie the browser sends by itself (this code cannot read it).
+// Because of that, every state-changing request must prove it comes from our page: Spring Security
+// sets a readable XSRF-TOKEN cookie and expects its value back in the X-XSRF-TOKEN header.
+async function csrfToken(refresh = false) {
+  if (refresh || !readCookie('XSRF-TOKEN')) await fetch('/api/auth/csrf', { credentials: 'same-origin' })
+  const value = readCookie('XSRF-TOKEN')
+  return value ? decodeURIComponent(value) : undefined
+}
+
+async function send(path: string, opts: Options, method: string, refreshCsrf: boolean) {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json', ...opts.headers }
+  if (!SAFE_METHODS.has(method)) {
+    const token = await csrfToken(refreshCsrf)
+    if (token) headers['X-XSRF-TOKEN'] = token
+  }
+  return fetch(path, { ...opts, method, headers, credentials: 'same-origin' })
+}
+
 export async function api<T = any>(path: string, opts: Options = {}): Promise<T> {
-  const token = localStorage.getItem('token')
-  const res = await fetch(path, {
-    ...opts,
-    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...opts.headers }
-  })
-  if (res.status === 401 && token) {
+  const method = (opts.method ?? 'GET').toUpperCase()
+  let res = await send(path, opts, method, false)
+  // A stale CSRF cookie (e.g. cleared by the browser): fetch a fresh one and retry once
+  if (res.status === 403 && !SAFE_METHODS.has(method)) res = await send(path, opts, method, true)
+  if (res.status === 401 && isSignedIn()) {
     // Session expired: drop it and send the user back to sign in
-    logoutLocal()
+    clearSession()
     window.location.href = '/auth'
   }
   if (!res.ok) {
@@ -24,15 +46,23 @@ export async function api<T = any>(path: string, opts: Options = {}): Promise<T>
 
 export const errorMessage = (e: unknown) => (e instanceof Error ? e.message : String(e))
 
+// Only non-secret details are kept in the browser, to draw the right screens
+export const isSignedIn = () => !!localStorage.getItem('role')
+
 export function saveSession(res: AuthResponse) {
-  localStorage.setItem('token', res.token)
+  localStorage.removeItem('token') // left over from before the cookie-based login
   localStorage.setItem('role', res.role)
   localStorage.setItem('userId', String(res.userId))
   localStorage.setItem('fullName', res.fullName || '')
 }
 
-export function logoutLocal() {
+export function clearSession() {
   for (const k of ['token', 'role', 'userId', 'fullName']) localStorage.removeItem(k)
+}
+
+// Asks the server to delete the HttpOnly cookie, then forgets the local details
+export async function logout() {
+  try { await api('/api/auth/logout', { method: 'POST' }) } catch { /* already signed out */ } finally { clearSession() }
 }
 
 const post = (path: string, body: unknown) => api<AuthResponse>(path, { method: 'POST', body: JSON.stringify(body) })

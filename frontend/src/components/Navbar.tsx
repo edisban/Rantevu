@@ -5,7 +5,7 @@ import { useChat } from '../chat'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useLang } from '../i18n'
 import { useThemeMode } from '../themeMode'
-import { logoutLocal } from '../api'
+import { isSignedIn, logout as signOut } from '../api'
 import Logo from './Logo'
 import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded'
 import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded'
@@ -21,10 +21,10 @@ export default function Navbar() {
   const nav = useNavigate()
   useLocation() // re-render on navigation so the logged-in state stays current
   const [confirm, setConfirm] = useState(false)
-  const loggedIn = !!localStorage.getItem('token')
+  const loggedIn = isSignedIn()
   const role = localStorage.getItem('role')
   const dashboard = role === 'ROLE_PROVIDER' ? '/provider/dashboard' : '/client/dashboard'
-  const logout = () => { logoutLocal(); setConfirm(false); nav('/') }
+  const logout = async () => { await signOut(); setConfirm(false); nav('/') }
 
   return (
     <Box component="header" sx={{ position: 'sticky', top: 0, zIndex: 1100, pt: { xs: 1.5, md: 2 } }}>
@@ -41,9 +41,7 @@ export default function Navbar() {
                   <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>{t('messages')}</Box>
                 </Button>
               </Tooltip>
-              {role === 'ROLE_PROVIDER' && (
-                <Button component={Link} to="/profile" color="inherit" startIcon={<AccountCircleRoundedIcon />} sx={{ display: { xs: 'none', sm: 'inline-flex' } }}>{t('profile')}</Button>
-              )}
+              <Button component={Link} to="/profile" color="inherit" startIcon={<AccountCircleRoundedIcon />} sx={{ display: { xs: 'none', sm: 'inline-flex' } }}>{t('profile')}</Button>
             </>
           )}
 

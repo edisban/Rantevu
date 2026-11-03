@@ -16,9 +16,11 @@ docker compose up --build
 ```
 
 Frontend: http://localhost:5173
-Backend: http://localhost:8082
+Backend (local tools only): http://127.0.0.1:8082
 
-Set `JWT_SECRET` (32+ characters) in your environment before deploying; the default is for local development only.
+The database port is not published; open a SQL shell with `docker exec -it rantevu-db-1 psql -U rantevu -d rantevu`.
+
+Before deploying, set `JWT_SECRET` (32+ random characters) and, once served over HTTPS, `COOKIE_SECURE=true`. If the frontend is hosted on another domain, set `CORS_ALLOWED_ORIGINS` and `COOKIE_SAME_SITE=None`.
 
 For frontend development without Docker, run the backend and Postgres, then `npm run dev` in `frontend/` (Vite proxies `/api` and the `/ws` socket to `localhost:8082`).
 
@@ -31,6 +33,19 @@ For frontend development without Docker, run the backend and Postgres, then `npm
 - Live chat between a client and a professional who share an appointment, with unread badges, delivered over WebSocket
 - Provider dashboard with stats and pending/upcoming views, plus a live profile preview
 - Server-side checks: only clients book, only the provider decides, only participants can cancel or chat
+- Account page with permanent account deletion (password confirmation; removes the user's appointments, messages and profile)
+
+## Security
+
+- JWT in an HttpOnly, SameSite=Lax cookie (not readable by JavaScript); `Secure` flag via `COOKIE_SECURE`
+- CSRF protection for every state-changing request (`XSRF-TOKEN` cookie echoed in the `X-XSRF-TOKEN` header)
+- BCrypt password hashing; passwords need 8+ characters with a letter and a number
+- Login rate limiting: 5 failures per username or 30 per IP in 15 minutes, then 429
+- Bean Validation on every request body; one error handler returning JSON messages
+- Security headers: Content-Security-Policy, X-Frame-Options, nosniff, Referrer-Policy, Permissions-Policy (HSTS automatically on HTTPS)
+- WebSocket handshake requires the login cookie and the site's own origin
+- CORS off by default (same-origin proxy); allowed origins configurable
+- Database not exposed outside Docker; API port bound to localhost
 - Glassmorphism UI in burgundy and beige, with animated intro, dark/light mode, and EN/GR language switcher
 - Responsive on mobile and desktop
 

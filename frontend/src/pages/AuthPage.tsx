@@ -1,9 +1,9 @@
 import { useLayoutEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { auth, errorMessage, saveSession } from '../api'
 import { useLang } from '../i18n'
 import { CATEGORIES, SPECIALTY_SUGGESTIONS } from '../categories'
-import { Alert, Autocomplete, Box, Button, ButtonBase, Chip, CircularProgress, Container, IconButton, InputAdornment, Paper, Tab, Tabs, TextField, Typography } from '@mui/material'
+import { Alert, Autocomplete, Box, Button, ButtonBase, Chip, CircularProgress, Container, IconButton, InputAdornment, Paper, Snackbar, Tab, Tabs, TextField, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded'
 import BadgeRoundedIcon from '@mui/icons-material/BadgeRounded'
@@ -23,7 +23,9 @@ const dashboardFor = (role: string) => (role === 'ROLE_PROVIDER' ? '/provider/da
 export default function AuthPage() {
   const { t, lang } = useLang()
   const nav = useNavigate()
-  const loggedInRole = localStorage.getItem('token') ? localStorage.getItem('role') : null
+  const loggedInRole = localStorage.getItem('role')
+  const location = useLocation()
+  const [toast, setToast] = useState(() => (location.state as { toast?: string } | null)?.toast ?? '')
 
   const features = [
     { icon: <BoltRoundedIcon />, title: t('featInstant'), desc: t('featInstantDesc') },
@@ -77,6 +79,9 @@ export default function AuthPage() {
             : <AuthCard onDone={role => nav(dashboardFor(role))} suggestions={SPECIALTY_SUGGESTIONS[lang]} />}
         </Box>
       </Box>
+      <Snackbar open={!!toast} autoHideDuration={4000} onClose={() => setToast('')} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+        <Alert severity="success" variant="filled" onClose={() => setToast('')}>{t(toast)}</Alert>
+      </Snackbar>
     </Container>
   )
 }
@@ -99,7 +104,9 @@ function AuthCard({ onDone, suggestions }: { onDone: (role: string) => void; sug
       saveSession(res)
       onDone(res.role)
     } catch (ex) {
-      setErr(tab === 0 ? 'error' : errorMessage(ex))
+      const message = errorMessage(ex)
+      // A wrong login stays vague on purpose; a lockout or a validation rule is shown as is
+      setErr(tab === 0 && message === 'Bad credentials' ? 'error' : message)
     } finally { setBusy(false) }
   }
 

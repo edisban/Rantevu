@@ -1,6 +1,6 @@
 package com.rantevu.backend.message;
 
-import com.rantevu.backend.security.JwtService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
@@ -13,17 +13,27 @@ import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import java.util.List;
 
-// Live delivery only: clients subscribe to /user/queue/messages; sending goes through the REST API
+/**
+ * Live delivery only: clients subscribe to /user/queue/messages; sending goes through the REST API.
+ * The handshake to /ws is an ordinary HTTP request, so the JWT cookie authenticates it in the
+ * Spring Security filter chain and that user becomes the STOMP session's user.
+ */
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
-    private final JwtService jwt;
-    public WebSocketConfig(JwtService jwt) { this.jwt = jwt; }
+    private final List<String> allowedOrigins;
+
+    public WebSocketConfig(@Value("${app.cors.allowed-origins}") List<String> allowedOrigins) {
+        this.allowedOrigins = allowedOrigins.stream().map(String::trim).filter(s -> !s.isEmpty()).toList();
+    }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws"); // same-origin only (the default)
+        // Same-origin is always allowed; other origins only when configured. Blocks cross-site WebSocket hijacking.
+        var endpoint = registry.addEndpoint("/ws");
+        if (!allowedOrigins.isEmpty()) endpoint.setAllowedOrigins(allowedOrigins.toArray(String[]::new));
     }
 
     @Override
@@ -41,13 +51,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 if (stomp == null || stomp.getCommand() == null) return message;
                 switch (stomp.getCommand()) {
                     case CONNECT -> {
-                        String header = stomp.getFirstNativeHeader("Authorization");
-                        if (header == null || !header.startsWith("Bearer ")) throw new MessageDeliveryException("Missing token");
-                        try {
-                            stomp.setUser(jwt.authenticate(header.substring(7)));
-                        } catch (RuntimeException e) {
-                            throw new MessageDeliveryException("Invalid token");
-                        }
+                        if (stomp.getUser() == null) throw new MessageDeliveryException("Not signed in");
                     }
                     // Only a user's own queue can be subscribed to, and clients never publish
                     case SUBSCRIBE -> {

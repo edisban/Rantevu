@@ -7,7 +7,7 @@ import BookingDialog from '../components/BookingDialog'
 import { DateBlock, EmptyState, PersonAvatar, StatusChip } from '../components/ui'
 import { formatTime } from '../format'
 import { Alert, Box, Button, Chip, Container, IconButton, InputAdornment, Paper, Skeleton, Snackbar, TextField, Tooltip, Typography } from '@mui/material'
-import { Link } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import ChatBubbleOutlineRoundedIcon from '@mui/icons-material/ChatBubbleOutlineRounded'
 import { alpha } from '@mui/material/styles'
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded'
@@ -24,13 +24,17 @@ export default function ClientDashboard() {
   const [q, setQ] = useState('')
   const [cat, setCat] = useState<string | null>(null)
   const [booking, setBooking] = useState<Provider | null>(null)
-  const [toast, setToast] = useState('')
+  const location = useLocation()
+  const nav = useNavigate()
+  const [toast, setToast] = useState(() => (location.state as { toast?: string } | null)?.toast ?? '')
   const [err, setErr] = useState('')
 
   const loadAppts = () => api<Appointment[]>('/api/appointments/mine').then(setAppts).catch(e => setErr(errorMessage(e)))
   useEffect(() => {
     api<Provider[]>('/api/providers').then(setProviders).catch(e => { setProviders([]); setErr(errorMessage(e)) })
     loadAppts()
+    // Clear the one-time message so a page refresh doesn't show it again
+    if (location.state) nav(location.pathname, { replace: true, state: null })
   }, [])
 
   const filtered = useMemo(() => (providers ?? []).filter(p => {

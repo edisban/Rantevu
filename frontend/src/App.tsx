@@ -18,7 +18,7 @@ export default function App() {
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/client/dashboard" element={<ProtectedRoute role="ROLE_CLIENT"><ClientDashboard /></ProtectedRoute>} />
             <Route path="/provider/dashboard" element={<ProtectedRoute role="ROLE_PROVIDER"><ProviderDashboard /></ProtectedRoute>} />
-            <Route path="/profile" element={<ProtectedRoute role="ROLE_PROVIDER"><ProfilePage /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
             <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>

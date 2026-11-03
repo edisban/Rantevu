@@ -1,6 +1,7 @@
 package com.rantevu.backend.appointment;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
@@ -17,6 +18,10 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
         select count(a) > 0 from Appointment a
         where (a.client.id = :x and a.provider.id = :y) or (a.client.id = :y and a.provider.id = :x)""")
     boolean existsBetween(@Param("x") Long x, @Param("y") Long y);
+
+    @Modifying
+    @Query("delete from Appointment a where a.client.id = :userId or a.provider.id = :userId")
+    int deleteAllForUser(@Param("userId") Long userId);
 
     List<Appointment> findByProvider_IdAndAppointmentDateBetweenAndStatusIn(Long providerId, LocalDateTime from, LocalDateTime to, Collection<AppointmentStatus> statuses);
 }
