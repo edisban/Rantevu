@@ -1,0 +1,96 @@
+package com.rantevu.backend.auth;
+
+import com.rantevu.backend.IntegrationTest;
+import com.rantevu.backend.security.AuthCookies;
+import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.containsString;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+class AuthIntegrationTest extends IntegrationTest {
+
+    @Test
+    void registerSetsHttpOnlyCookieAndKeepsTokenOutOfTheBody() throws Exception {
+        var res = mvc.perform(post("/api/auth/register/client").with(xsrf())
+                .contentType(MediaType.APPLICATION_JSON).content(registerBody(unique("cookie"), PASSWORD)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.role").value("ROLE_CLIENT"))
+            .andExpect(jsonPath("$.token").doesNotExist())
+            .andReturn().getResponse();
+
+        String setCookie = res.getHeader(HttpHeaders.SET_COOKIE);
+        assertThat(setCookie).startsWith(AuthCookies.NAME + "=").contains("HttpOnly", "SameSite=Lax", "Path=/");
+    }
+
+    @Test
+    void weakPasswordsAreRejected() throws Exception {
+        for (String weak : new String[] { "short1", "onlyletters", "12345678" }) {
+            mvc.perform(post("/api/auth/register/client").with(xsrf())
+                    .contentType(MediaType.APPLICATION_JSON).content(registerBody(unique("weak"), weak)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Password must be at least 8 characters and include a letter and a number"));
+        }
+    }
+
+    @Test
+    void usernameMustBeUnique() throws Exception {
+        var existing = client();
+        mvc.perform(post("/api/auth/register/client").with(xsrf())
+                .contentType(MediaType.APPLICATION_JSON).content(registerBody(existing.username(), PASSWORD)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message").value("Username already taken"));
+    }
+
+    @Test
+    void protectedEndpointsNeedTheLoginCookie() throws Exception {
+        mvc.perform(get("/api/profile"))
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.message").value("Please sign in"));
+    }
+
+    @Test
+    void stateChangingRequestsNeedTheCsrfToken() throws Exception {
+        mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"x\",\"password\":\"y\"}"))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void loginIsLockedAfterFiveWrongPasswords() throws Exception {
+        var victim = client();
+        String wrong = "{\"username\":\"%s\",\"password\":\"wrong-pass-1\"}".formatted(victim.username());
+        for (int i = 0; i < 5; i++) {
+            mvc.perform(post("/api/auth/login").with(xsrf()).contentType(MediaType.APPLICATION_JSON).content(wrong))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Bad credentials"));
+        }
+        // Even the right password is refused while locked
+        mvc.perform(post("/api/auth/login").with(xsrf()).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"%s\",\"password\":\"%s\"}".formatted(victim.username(), PASSWORD)))
+            .andExpect(status().isTooManyRequests());
+    }
+
+    @Test
+    void logoutExpiresTheCookie() throws Exception {
+        var user = client();
+        mvc.perform(post("/api/auth/logout").cookie(user.cookie()).with(xsrf()))
+            .andExpect(status().isNoContent())
+            .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("Max-Age=0")));
+    }
+
+    @Test
+    void passwordHashesNeverLeaveTheServer() throws Exception {
+        var provider = provider();
+        getAs(provider, "/api/providers")
+            .andExpect(status().isOk())
+            .andExpect(content().string(not(containsString("password"))));
+        getAs(provider, "/api/profile")
+            .andExpect(content().string(not(containsString("password"))));
+    }
+}

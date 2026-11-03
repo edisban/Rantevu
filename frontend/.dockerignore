@@ -1,0 +1,5 @@
+# Installed and built inside the image; never copy the host's (possibly Windows) versions
+node_modules
+dist
+npm-debug.log*
+.vscode

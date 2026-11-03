@@ -1,5 +1,7 @@
 # Rantevu
 
+[![CI/CD](https://github.com/edisban/Rantevu/actions/workflows/ci.yml/badge.svg)](https://github.com/edisban/Rantevu/actions/workflows/ci.yml)
+
 Rantevu is a full-stack booking platform connecting clients with service providers (doctors, professionals). Clients search providers, request appointments, and receive status updates. Providers manage their profile, view incoming requests, and accept or reject appointments.
 
 ## Stack
@@ -48,6 +50,19 @@ For frontend development without Docker, run the backend and Postgres, then `npm
 - Database not exposed outside Docker; API port bound to localhost
 - Glassmorphism UI in burgundy and beige, with animated intro, dark/light mode, and EN/GR language switcher
 - Responsive on mobile and desktop
+
+## Tests
+
+- **Backend:** `cd backend && ./mvnw verify` — 20 integration tests run the whole app against a real PostgreSQL started by Testcontainers (Docker required): auth cookies, CSRF, password rules, login lockout, booking rules and double booking, chat access, account deletion.
+- **Frontend:** `cd frontend && npm test` — Vitest unit tests for search and category matching.
+
+## CI/CD
+
+GitHub Actions (`.github/workflows/ci.yml`):
+
+- **Every push and pull request:** backend build + integration tests, frontend lint + tests + type-check + build, and both Docker images built.
+- **Every push to `main`:** the images are also published to GitHub Container Registry as `ghcr.io/edisban/rantevu-backend` and `ghcr.io/edisban/rantevu-frontend` (tags `latest` and the commit SHA).
+- **Dependabot** opens weekly update pull requests for Maven, npm, GitHub Actions and Docker base images.
 
 ## License
 

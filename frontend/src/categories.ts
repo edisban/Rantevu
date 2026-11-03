@@ -19,7 +19,7 @@ export const CATEGORIES: Category[] = [
   { key: 'dentist', icon: MedicalServicesIcon, en: 'Dentists', el: 'Οδοντίατροι', color: '#14b8a6', words: ['dent', 'orthodont', 'οδοντ'] },
   { key: 'physio', icon: AccessibilityNewIcon, en: 'Physiotherapy', el: 'Φυσικοθεραπεία', color: '#22c55e', words: ['physio', 'chiropract', 'φυσικοθεραπ'] },
   { key: 'psych', icon: PsychologyIcon, en: 'Psychology', el: 'Ψυχολογία', color: '#a855f7', words: ['psych', 'therapist', 'counsel', 'ψυχ'] },
-  { key: 'beauty', icon: ContentCutIcon, en: 'Hair & Beauty', el: 'Ομορφιά', color: '#ec4899', words: ['hair', 'beauty', 'barber', 'nail', 'makeup', 'κομμ', 'κουρ', 'αισθητ', 'ομορφ'] },
+  { key: 'beauty', icon: ContentCutIcon, en: 'Hair & Beauty', el: 'Ομορφιά', color: '#ec4899', words: ['hair', 'beaut', 'barber', 'nail', 'makeup', 'κομμ', 'κουρ', 'αισθητ', 'ομορφ'] },
   { key: 'fitness', icon: FitnessCenterIcon, en: 'Fitness', el: 'Γυμναστική', color: '#f97316', words: ['fitness', 'trainer', 'gym', 'yoga', 'pilates', 'γυμν', 'προπονη'] },
   { key: 'legal', icon: GavelIcon, en: 'Legal', el: 'Νομικά', color: '#6366f1', words: ['law', 'legal', 'attorney', 'notary', 'δικηγορ', 'νομικ', 'συμβολαιογραφ'] },
   { key: 'tutor', icon: SchoolIcon, en: 'Tutoring', el: 'Μαθήματα', color: '#eab308', words: ['tutor', 'teacher', 'lesson', 'καθηγητ', 'δασκαλ', 'μαθηματ'] },
