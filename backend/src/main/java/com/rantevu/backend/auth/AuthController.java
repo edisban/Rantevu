@@ -1,5 +1,6 @@
 package com.rantevu.backend.auth;
 
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,15 +11,15 @@ public class AuthController {
     public AuthController(AuthService service) { this.service = service; }
 
     @PostMapping("/register/client")
-    public ResponseEntity<AuthResponse> registerClient(@RequestBody ClientRegisterRequest r) {
+    public ResponseEntity<AuthResponse> registerClient(@Valid @RequestBody ClientRegisterRequest r) {
         return ResponseEntity.ok(service.registerClient(r));
     }
     @PostMapping("/register/provider")
-    public ResponseEntity<AuthResponse> registerProvider(@RequestBody ProviderRegisterRequest r) {
+    public ResponseEntity<AuthResponse> registerProvider(@Valid @RequestBody ProviderRegisterRequest r) {
         return ResponseEntity.ok(service.registerProvider(r));
     }
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest r) {
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest r) {
         return ResponseEntity.ok(service.login(r));
     }
 }

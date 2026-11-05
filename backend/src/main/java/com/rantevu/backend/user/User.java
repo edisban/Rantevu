@@ -1,5 +1,6 @@
 package com.rantevu.backend.user;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.Instant;
 
@@ -12,6 +13,7 @@ public class User {
     private String username;
     @Column(unique = true, nullable = false)
     private String email;
+    @JsonIgnore
     @Column(name = "password_hash", nullable = false)
     private String password;
     @Column(name = "full_name", nullable = false)

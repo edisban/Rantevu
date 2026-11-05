@@ -16,8 +16,9 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/rantevu
       SPRING_DATASOURCE_USERNAME: rantevu
       SPRING_DATASOURCE_PASSWORD: rantevu
+      JWT_SECRET: ${JWT_SECRET:-dev-only-secret-change-me-in-production-0123456789}
     ports:
-      - "8080:8080"
+      - "8082:8080"
     depends_on:
       - db
 

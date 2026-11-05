@@ -19,7 +19,6 @@ public class ProviderProfile {
     private Double pricePerVisit;
 
     public Long getUserId() { return userId; }
-    public void setUserId(Long userId) { this.userId = userId; }
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }
     public String getSpecialty() { return specialty; }

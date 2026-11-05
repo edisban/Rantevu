@@ -1,10 +1,16 @@
 package com.rantevu.backend.profile;
 
+import com.rantevu.backend.provider.ProviderDto;
 import com.rantevu.backend.provider.ProviderProfile;
 import com.rantevu.backend.provider.ProviderProfileRepository;
+import com.rantevu.backend.user.MeResponse;
+import com.rantevu.backend.user.Role;
 import com.rantevu.backend.user.User;
 import com.rantevu.backend.user.UserRepository;
-import org.springframework.http.ResponseEntity;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,25 +22,35 @@ public class ProfileController {
     public ProfileController(UserRepository users, ProviderProfileRepository profiles) { this.users = users; this.profiles = profiles; }
 
     @GetMapping
-    public ResponseEntity<?> get(Authentication auth) {
+    public ProfileResponse get(Authentication auth) {
         Long uid = (Long) auth.getPrincipal();
         User u = users.findById(uid).orElseThrow();
-        ProviderProfile p = profiles.findById(uid).orElse(null);
-        return ResponseEntity.ok(new ProfileResponse(u, p));
+        return response(u, profiles.findById(uid).orElse(null));
     }
 
     @PutMapping
-    public ResponseEntity<?> update(Authentication auth, @RequestBody ProfileRequest req) {
+    public ProfileResponse update(Authentication auth, @Valid @RequestBody ProfileRequest req) {
         Long uid = (Long) auth.getPrincipal();
         User u = users.findById(uid).orElseThrow();
         u.setPhone(req.phone());
         users.save(u);
-        ProviderProfile p = profiles.findById(uid).orElseGet(() -> { var x = new ProviderProfile(); x.setUser(u); x.setUserId(uid); return x; });
+        // Only providers have a public profile; clients can only update their phone
+        if (u.getRole() != Role.ROLE_PROVIDER) return response(u, null);
+        ProviderProfile p = profiles.findById(uid).orElseGet(() -> { var x = new ProviderProfile(); x.setUser(u); return x; });
         p.setSpecialty(req.specialty()); p.setAddress(req.address()); p.setBio(req.bio()); p.setPricePerVisit(req.pricePerVisit());
-        profiles.save(p);
-        return ResponseEntity.ok(new ProfileResponse(u, p));
+        return response(u, profiles.save(p));
     }
 
-    public record ProfileRequest(String phone, String specialty, String address, String bio, Double pricePerVisit) {}
-    public record ProfileResponse(User user, ProviderProfile profile) {}
+    private static ProfileResponse response(User u, ProviderProfile p) {
+        return new ProfileResponse(MeResponse.from(u), p == null ? null : ProviderDto.from(p));
+    }
+
+    public record ProfileRequest(
+        @Size(max = 30, message = "Phone must be at most 30 characters") String phone,
+        @Size(max = 100, message = "Specialty must be at most 100 characters") String specialty,
+        @Size(max = 255, message = "Address must be at most 255 characters") String address,
+        @Size(max = 2000, message = "Bio must be at most 2000 characters") String bio,
+        @PositiveOrZero(message = "Price cannot be negative") @Max(value = 100000, message = "Price is too high") Double pricePerVisit) {}
+
+    public record ProfileResponse(MeResponse user, ProviderDto profile) {}
 }

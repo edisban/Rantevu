@@ -8,6 +8,7 @@ import com.rantevu.backend.user.User;
 import com.rantevu.backend.user.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AuthService {
@@ -21,24 +22,39 @@ public class AuthService {
     }
 
     public AuthResponse registerClient(ClientRegisterRequest r) {
-        if (users.existsByEmail(r.email()) || users.existsByUsername(r.username())) throw new IllegalArgumentException("Email in use");
-        var u = new User();
-        u.setUsername(r.username()); u.setEmail(r.email()); u.setPassword(encoder.encode(r.password())); u.setFullName(r.fullName()); u.setRole(Role.ROLE_CLIENT);
-        users.save(u);
-        return new AuthResponse(jwt.generate(u.getId(), u.getRole().name()), u.getRole().name(), u.getId(), u.getFullName());
+        var u = createUser(r.username(), r.email(), r.password(), r.fullName(), Role.ROLE_CLIENT);
+        return response(u);
     }
 
+    @Transactional
     public AuthResponse registerProvider(ProviderRegisterRequest r) {
-        if (users.existsByEmail(r.email()) || users.existsByUsername(r.username())) throw new IllegalArgumentException("Email in use");
-        var u = new User();
-        u.setUsername(r.username()); u.setEmail(r.email()); u.setPassword(encoder.encode(r.password())); u.setFullName(r.fullName()); u.setRole(Role.ROLE_PROVIDER);
-        users.save(u);
-        return new AuthResponse(jwt.generate(u.getId(), u.getRole().name()), u.getRole().name(), u.getId(), u.getFullName());
+        var u = createUser(r.username(), r.email(), r.password(), r.fullName(), Role.ROLE_PROVIDER);
+        // Create the public profile (its id comes from the user via @MapsId) right away so the provider shows up in search
+        var p = new ProviderProfile();
+        p.setUser(u); p.setSpecialty(blankToNull(r.specialty()));
+        profiles.save(p);
+        return response(u);
     }
 
     public AuthResponse login(LoginRequest r) {
         var u = users.findByUsername(r.username()).orElseThrow(() -> new IllegalArgumentException("Bad credentials"));
         if (!encoder.matches(r.password(), u.getPassword())) throw new IllegalArgumentException("Bad credentials");
+        return response(u);
+    }
+
+    private User createUser(String username, String email, String password, String fullName, Role role) {
+        // Field rules are enforced by Bean Validation on the request records
+        if (users.existsByUsername(username.trim())) throw new IllegalArgumentException("Username already taken");
+        if (users.existsByEmail(email.trim())) throw new IllegalArgumentException("Email already in use");
+        var u = new User();
+        u.setUsername(username.trim()); u.setEmail(email.trim()); u.setPassword(encoder.encode(password)); u.setFullName(fullName.trim()); u.setRole(role);
+        return users.save(u);
+    }
+
+    private AuthResponse response(User u) {
         return new AuthResponse(jwt.generate(u.getId(), u.getRole().name()), u.getRole().name(), u.getId(), u.getFullName());
     }
+
+    private static boolean isBlank(String s) { return s == null || s.isBlank(); }
+    private static String blankToNull(String s) { return isBlank(s) ? null : s.trim(); }
 }
