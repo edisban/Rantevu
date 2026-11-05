@@ -1,0 +1,4 @@
+# Secrets: keep real values out of git, but share the template
+.env
+.env.*
+!.env.example

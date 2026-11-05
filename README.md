@@ -22,7 +22,15 @@ Backend (local tools only): http://127.0.0.1:8082
 
 The database port is not published; open a SQL shell with `docker exec -it rantevu-db-1 psql -U rantevu -d rantevu`.
 
-Before deploying, set `JWT_SECRET` (32+ random characters) and, once served over HTTPS, `COOKIE_SECURE=true`. If the frontend is hosted on another domain, set `CORS_ALLOWED_ORIGINS` and `COOKIE_SAME_SITE=None`.
+### Configuration
+
+The app runs without any setup, using local development defaults. To change settings, copy the template and edit it (`.env` is ignored by git):
+
+```bash
+cp .env.example .env
+```
+
+Before deploying, replace `POSTGRES_PASSWORD` and `JWT_SECRET` (32+ random characters) and, once served over HTTPS, set `COOKIE_SECURE=true`. If the frontend is hosted on another domain, set `CORS_ALLOWED_ORIGINS` and `COOKIE_SAME_SITE=None`. See `.env.example` for every setting.
 
 For frontend development without Docker, run the backend and Postgres, then `npm run dev` in `frontend/` (Vite proxies `/api` and the `/ws` socket to `localhost:8082`).
 
