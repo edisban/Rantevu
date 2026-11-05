@@ -1,5 +1,7 @@
 import { useState } from 'react'
-import { Box, Button, Container, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Paper, Tooltip } from '@mui/material'
+import { Badge, Box, Button, Container, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Paper, Tooltip } from '@mui/material'
+import ChatRoundedIcon from '@mui/icons-material/ChatRounded'
+import { useChat } from '../chat'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useLang } from '../i18n'
 import { useThemeMode } from '../themeMode'
@@ -15,6 +17,7 @@ import AccountCircleRoundedIcon from '@mui/icons-material/AccountCircleRounded'
 export default function Navbar() {
   const { t, toggle: toggleLang } = useLang()
   const { mode, toggle: toggleTheme } = useThemeMode()
+  const { unread } = useChat()
   const nav = useNavigate()
   useLocation() // re-render on navigation so the logged-in state stays current
   const [confirm, setConfirm] = useState(false)
@@ -32,6 +35,12 @@ export default function Navbar() {
           {loggedIn && (
             <>
               <Button component={Link} to={dashboard} color="inherit" startIcon={<SpaceDashboardRoundedIcon />} sx={{ display: { xs: 'none', sm: 'inline-flex' } }}>{t('dashboard')}</Button>
+              <Tooltip title={t('messages')}>
+                <Button component={Link} to="/messages" color="inherit" aria-label={t('messages')} sx={{ minWidth: 0, px: { xs: 1, sm: 1.5 } }}
+                  startIcon={<Badge color="error" badgeContent={unread} max={99}><ChatRoundedIcon /></Badge>}>
+                  <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>{t('messages')}</Box>
+                </Button>
+              </Tooltip>
               {role === 'ROLE_PROVIDER' && (
                 <Button component={Link} to="/profile" color="inherit" startIcon={<AccountCircleRoundedIcon />} sx={{ display: { xs: 'none', sm: 'inline-flex' } }}>{t('profile')}</Button>
               )}

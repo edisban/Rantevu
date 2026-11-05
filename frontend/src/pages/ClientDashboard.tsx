@@ -6,7 +6,9 @@ import { CATEGORIES, categoryOf, normalize } from '../categories'
 import BookingDialog from '../components/BookingDialog'
 import { DateBlock, EmptyState, PersonAvatar, StatusChip } from '../components/ui'
 import { formatTime } from '../format'
-import { Alert, Box, Button, Chip, Container, InputAdornment, Paper, Skeleton, Snackbar, TextField, Typography } from '@mui/material'
+import { Alert, Box, Button, Chip, Container, IconButton, InputAdornment, Paper, Skeleton, Snackbar, TextField, Tooltip, Typography } from '@mui/material'
+import { Link } from 'react-router-dom'
+import ChatBubbleOutlineRoundedIcon from '@mui/icons-material/ChatBubbleOutlineRounded'
 import { alpha } from '@mui/material/styles'
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded'
 import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded'
@@ -142,7 +144,12 @@ export default function ClientDashboard() {
                         </Typography>
                         <Box sx={{ mt: 0.75, display: 'flex', alignItems: 'center', gap: 1 }}>
                           <StatusChip status={a.status} />
-                          {open && <Button size="small" color="error" onClick={() => cancel(a.id)} sx={{ ml: 'auto', minWidth: 0 }}>{t('cancelAppt')}</Button>}
+                          <Tooltip title={t('message')}>
+                            <IconButton component={Link} to={`/messages?with=${a.provider.id}`} size="small" color="primary" sx={{ ml: 'auto' }} aria-label={t('message')}>
+                              <ChatBubbleOutlineRoundedIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          {open && <Button size="small" color="error" onClick={() => cancel(a.id)} sx={{ minWidth: 0 }}>{t('cancelAppt')}</Button>}
                         </Box>
                       </Box>
                     </Box>

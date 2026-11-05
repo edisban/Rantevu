@@ -12,6 +12,7 @@ import InsightsRoundedIcon from '@mui/icons-material/InsightsRounded'
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded'
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
 import EditRoundedIcon from '@mui/icons-material/EditRounded'
+import ChatBubbleOutlineRoundedIcon from '@mui/icons-material/ChatBubbleOutlineRounded'
 import InboxRoundedIcon from '@mui/icons-material/InboxRounded'
 import EmailRoundedIcon from '@mui/icons-material/EmailRounded'
 import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded'
@@ -102,6 +103,7 @@ export default function ProviderDashboard() {
                   {a.notes && <Typography variant="body2" sx={{ mt: 1, fontStyle: 'italic' }}>“{a.notes}”</Typography>}
                 </Box>
                 <Box sx={{ display: 'flex', gap: 1, ml: 'auto', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                  <Button component={Link} to={`/messages?with=${a.client.id}`} color="inherit" startIcon={<ChatBubbleOutlineRoundedIcon />}>{t('message')}</Button>
                   {a.status === 'PENDING' && future && (
                     <>
                       <Button variant="outlined" color="error" startIcon={<CloseRoundedIcon />} onClick={() => setStatus(a.id, 'REJECTED')}>{t('reject')}</Button>
