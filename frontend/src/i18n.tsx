@@ -1,31 +1,110 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useState, type ReactNode } from 'react'
 
 type Lang = 'el' | 'en'
 const dict: Record<Lang, Record<string, string>> = {
   el: {
-    home: 'Αρχική', login: 'Σύνδεση', register: 'Εγγραφή', logout: 'Αποσύνδεση',
-    signIn: 'Σύνδεση', signUp: 'Εγγραφή', client: 'Πελάτης / Ασθενής', provider: 'Επαγγελματίας / Γιατρός',
+    home: 'Αρχική', dashboard: 'Πίνακας', login: 'Σύνδεση', register: 'Εγγραφή', logout: 'Αποσύνδεση',
+    logoutConfirm: 'Θέλετε σίγουρα να αποσυνδεθείτε;', cancel: 'Άκυρο',
+    signIn: 'Σύνδεση', signUp: 'Εγγραφή', client: 'Πελάτης', provider: 'Επαγγελματίας',
+    clientDesc: 'Κλείνω ραντεβού', providerDesc: 'Δέχομαι ραντεβού',
     username: 'Όνομα χρήστη', email: 'Email', password: 'Κωδικός πρόσβασης', fullName: 'Ονοματεπώνυμο',
-    phone: 'Τηλέφωνο', specialty: 'Ειδικότητα', address: 'Διεύθυνση', bio: 'Σύντομο Βιογραφικό',
-    price: 'Τιμή Επίσκεψης (€)', success: 'Επιτυχής εγγραφή!', error: 'Λάθος στοιχεία σύνδεσης',
-    profile: 'Προφίλ', save: 'Αποθήκευση', toggle: 'EN',
-    footer: '© 2026 Rantevu - Όλες οι υπηρεσίες κρατήσεων σε ένα μέρος'
+    phone: 'Τηλέφωνο', specialty: 'Ειδικότητα / Επάγγελμα', address: 'Διεύθυνση', bio: 'Σύντομο βιογραφικό',
+    price: 'Τιμή επίσκεψης', success: 'Επιτυχής εγγραφή!', error: 'Λάθος στοιχεία σύνδεσης',
+    profile: 'Προφίλ', save: 'Αποθήκευση', saved: 'Οι αλλαγές αποθηκεύτηκαν', toggle: 'EN',
+    footer: 'Όλες οι υπηρεσίες κρατήσεων σε ένα μέρος', tagline: 'Online ραντεβού για κάθε επάγγελμα',
+    heroBadge: 'Γιατροί · Οδοντίατροι · Κάθε επάγγελμα',
+    heroTitle1: 'Κλείστε τον σωστό επαγγελματία,', heroTitle2: 'σε δευτερόλεπτα.',
+    heroSub: 'Βρείτε γιατρούς, οδοντιάτρους, θεραπευτές, δικηγόρους και κάθε επαγγελματία. Ζητήστε ραντεβού online και λάβετε επιβεβαίωση χωρίς τηλέφωνα.',
+    featInstant: 'Άμεσο αίτημα', featInstantDesc: 'Επιλέξτε ημέρα και ώρα με δύο κλικ',
+    featStatus: 'Ζωντανή κατάσταση', featStatusDesc: 'Δείτε πότε εγκρίνεται το ραντεβού σας',
+    featAny: 'Κάθε επάγγελμα', featAnyDesc: 'Από υγεία μέχρι νομικά και ομορφιά',
+    welcomeBack: 'Καλώς ήρθατε ξανά', welcomeSub: 'Συνδεθείτε για να διαχειριστείτε τα ραντεβού σας',
+    createAccount: 'Δημιουργία λογαριασμού', createSub: 'Δωρεάν, σε λιγότερο από ένα λεπτό',
+    'Username already taken': 'Το όνομα χρήστη χρησιμοποιείται ήδη', 'Email already in use': 'Το email χρησιμοποιείται ήδη',
+    'Email is not valid': 'Το email δεν είναι έγκυρο', 'Password must be at least 6 characters': 'Ο κωδικός πρέπει να έχει τουλάχιστον 6 χαρακτήρες',
+    'Username is required': 'Το όνομα χρήστη είναι υποχρεωτικό', 'Email is required': 'Το email είναι υποχρεωτικό',
+    'Full name is required': 'Το ονοματεπώνυμο είναι υποχρεωτικό', 'Password is required': 'Ο κωδικός είναι υποχρεωτικός',
+    'This time slot is already taken': 'Αυτή η ώρα έχει ήδη κλειστεί', 'Appointment date must be in the future': 'Η ημερομηνία πρέπει να είναι στο μέλλον',
+    'Price cannot be negative': 'Η τιμή δεν μπορεί να είναι αρνητική',
+    messages: 'Μηνύματα', message: 'Μήνυμα', you: 'Εσείς', live: 'Ζωντανά', connecting: 'Σύνδεση…', send: 'Αποστολή',
+    today: 'Σήμερα', yesterday: 'Χθες', typeMessage: 'Γράψτε ένα μήνυμα…', startChat: 'Ξεκινήστε τη συζήτηση',
+    chatEmpty: 'Δεν υπάρχουν συνομιλίες ακόμη', chatEmptyDesc: 'Μπορείτε να στείλετε μήνυμα σε όποιον έχετε κλείσει ραντεβού.',
+    selectChat: 'Επιλέξτε μια συνομιλία',
+    'You can only message people you have an appointment with': 'Μπορείτε να στείλετε μήνυμα μόνο σε όσους έχετε ραντεβού',
+    'Message cannot be empty': 'Το μήνυμα δεν μπορεί να είναι κενό',
+    noAccount: 'Δεν έχετε λογαριασμό;', haveAccount: 'Έχετε ήδη λογαριασμό;',
+    goDashboard: 'Μετάβαση στον πίνακα', alreadySignedIn: 'Είστε ήδη συνδεδεμένοι', pwMin: 'Τουλάχιστον 6 χαρακτήρες',
+    hello: 'Γεια σας, {name}', clientSub: 'Βρείτε επαγγελματία και κλείστε το επόμενο ραντεβού σας.',
+    searchPh: 'Αναζήτηση με όνομα, ειδικότητα ή περιοχή…', all: 'Όλα', found: '{n} επαγγελματίες',
+    noProviders: 'Δεν βρέθηκαν επαγγελματίες', noProvidersDesc: 'Δοκιμάστε άλλη αναζήτηση ή κατηγορία.',
+    book: 'Κράτηση', perVisit: '/ επίσκεψη', myAppointments: 'Τα ραντεβού μου',
+    noAppointments: 'Δεν έχετε ακόμη ραντεβού', noAppointmentsDesc: 'Επιλέξτε επαγγελματία για να ξεκινήσετε.',
+    cancelAppt: 'Ακύρωση', upcoming: 'Επερχόμενα', past: 'Παλαιότερα',
+    bookWith: 'Ραντεβού με {name}', pickDate: 'Ημερομηνία', pickTime: 'Διαθέσιμες ώρες', notes: 'Σημειώσεις (προαιρετικό)',
+    notesPh: 'Π.χ. λόγος επίσκεψης', confirm: 'Αποστολή αιτήματος', requestSent: 'Το αίτημα στάλθηκε!',
+    PENDING: 'Σε αναμονή', ACCEPTED: 'Εγκρίθηκε', REJECTED: 'Απορρίφθηκε', CANCELLED: 'Ακυρώθηκε',
+    providerSub: 'Διαχειριστείτε τα αιτήματα και το πρόγραμμά σας.',
+    statPending: 'Αιτήματα σε αναμονή', statUpcoming: 'Επερχόμενα ραντεβού', statTotal: 'Σύνολο ραντεβού',
+    tabPending: 'Σε αναμονή', tabUpcoming: 'Επερχόμενα', tabAll: 'Όλα',
+    accept: 'Αποδοχή', reject: 'Απόρριψη', noRequests: 'Τίποτα εδώ ακόμη', noRequestsDesc: 'Τα νέα αιτήματα θα εμφανιστούν εδώ.',
+    completeProfile: 'Ολοκληρώστε το προφίλ σας', completeProfileDesc: 'Προσθέστε ειδικότητα, διεύθυνση και τιμή ώστε να σας βρίσκουν οι πελάτες.',
+    editProfile: 'Επεξεργασία προφίλ', updated: 'Ενημερώθηκε',
+    profileSub: 'Αυτά τα στοιχεία εμφανίζονται στους πελάτες σας.', preview: 'Προεπισκόπηση',
   },
   en: {
-    home: 'Home', login: 'Login', register: 'Register', logout: 'Logout',
-    signIn: 'Login', signUp: 'Register', client: 'Client / Patient', provider: 'Professional / Doctor',
+    home: 'Home', dashboard: 'Dashboard', login: 'Login', register: 'Register', logout: 'Logout',
+    logoutConfirm: 'Are you sure you want to log out?', cancel: 'Cancel',
+    signIn: 'Sign in', signUp: 'Sign up', client: 'Client', provider: 'Professional',
+    clientDesc: 'I book appointments', providerDesc: 'I accept appointments',
     username: 'Username', email: 'Email', password: 'Password', fullName: 'Full name',
-    phone: 'Phone', specialty: 'Specialty', address: 'Address', bio: 'Short bio',
-    price: 'Visit price (€)', success: 'Registration successful!', error: 'Invalid credentials',
-    profile: 'Profile', save: 'Save', toggle: 'EL',
-    footer: '© 2026 Rantevu - All booking services in one place'
+    phone: 'Phone', specialty: 'Specialty / Profession', address: 'Address', bio: 'Short bio',
+    price: 'Visit price', success: 'Registration successful!', error: 'Invalid credentials',
+    profile: 'Profile', save: 'Save', saved: 'Changes saved', toggle: 'EL',
+    footer: 'All booking services in one place', tagline: 'Online booking for every profession',
+    heroBadge: 'Doctors · Dentists · Every profession',
+    heroTitle1: 'Book the right professional,', heroTitle2: 'in seconds.',
+    heroSub: 'Find doctors, dentists, therapists, lawyers and every kind of professional. Request an appointment online and get confirmed without a single phone call.',
+    featInstant: 'Instant requests', featInstantDesc: 'Pick a day and time in two clicks',
+    featStatus: 'Live status', featStatusDesc: 'See the moment your visit is confirmed',
+    featAny: 'Every profession', featAnyDesc: 'From health to legal and beauty',
+    welcomeBack: 'Welcome back', welcomeSub: 'Sign in to manage your appointments',
+    createAccount: 'Create your account', createSub: 'Free, in under a minute',
+    messages: 'Messages', message: 'Message', you: 'You', live: 'Live', connecting: 'Connecting…', send: 'Send',
+    today: 'Today', yesterday: 'Yesterday', typeMessage: 'Write a message…', startChat: 'Start the conversation',
+    chatEmpty: 'No conversations yet', chatEmptyDesc: 'You can message anyone you have an appointment with.',
+    selectChat: 'Select a conversation',
+    noAccount: "Don't have an account?", haveAccount: 'Already have an account?',
+    goDashboard: 'Go to dashboard', alreadySignedIn: 'You are signed in', pwMin: 'At least 6 characters',
+    hello: 'Hi, {name}', clientSub: 'Find a professional and book your next appointment.',
+    searchPh: 'Search by name, specialty or area…', all: 'All', found: '{n} professionals',
+    noProviders: 'No professionals found', noProvidersDesc: 'Try another search or category.',
+    book: 'Book', perVisit: '/ visit', myAppointments: 'My appointments',
+    noAppointments: 'No appointments yet', noAppointmentsDesc: 'Pick a professional to get started.',
+    cancelAppt: 'Cancel', upcoming: 'Upcoming', past: 'Past',
+    bookWith: 'Book with {name}', pickDate: 'Date', pickTime: 'Available times', notes: 'Notes (optional)',
+    notesPh: 'E.g. reason for the visit', confirm: 'Send request', requestSent: 'Request sent!',
+    PENDING: 'Pending', ACCEPTED: 'Confirmed', REJECTED: 'Declined', CANCELLED: 'Cancelled',
+    providerSub: 'Manage your requests and schedule.',
+    statPending: 'Pending requests', statUpcoming: 'Upcoming visits', statTotal: 'Total appointments',
+    tabPending: 'Pending', tabUpcoming: 'Upcoming', tabAll: 'All',
+    accept: 'Accept', reject: 'Decline', noRequests: 'Nothing here yet', noRequestsDesc: 'New requests will show up here.',
+    completeProfile: 'Complete your profile', completeProfileDesc: 'Add your specialty, address and price so clients can find you.',
+    editProfile: 'Edit profile', updated: 'Updated',
+    profileSub: 'These details are shown to your clients.', preview: 'Preview',
   }
 }
 
-const Ctx = createContext<any>(null)
-export function LangProvider({ children }: any) {
+type Ctx = { lang: Lang; locale: string; t: (k: string, vars?: Record<string, string | number>) => string; toggle: () => void }
+const Ctx = createContext<Ctx>(null!)
+
+export function LangProvider({ children }: { children: ReactNode }) {
   const [lang, setLang] = useState<Lang>(() => (localStorage.getItem('lang') as Lang) || 'el')
   const toggle = () => { const n = lang === 'el' ? 'en' : 'el'; setLang(n); localStorage.setItem('lang', n) }
-  return <Ctx.Provider value={{ lang, t: (k: string) => dict[lang][k] ?? k, toggle }}>{children}</Ctx.Provider>
+  const t = (k: string, vars?: Record<string, string | number>) => {
+    let s = dict[lang][k] ?? k
+    if (vars) for (const [key, v] of Object.entries(vars)) s = s.replace(`{${key}}`, String(v))
+    return s
+  }
+  return <Ctx.Provider value={{ lang, locale: lang === 'el' ? 'el-GR' : 'en-GB', t, toggle }}>{children}</Ctx.Provider>
 }
 export const useLang = () => useContext(Ctx)

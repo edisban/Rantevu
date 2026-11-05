@@ -1,40 +1,67 @@
-import { useEffect, useState } from 'react'
-import { AppBar, Button, Dialog, DialogActions, DialogTitle, IconButton, Toolbar, Typography } from '@mui/material'
+import { useState } from 'react'
+import { Box, Button, Container, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Paper, Tooltip } from '@mui/material'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useLang } from '../i18n'
 import { useThemeMode } from '../themeMode'
-import Brightness4Icon from '@mui/icons-material/Brightness4'
-import Brightness7Icon from '@mui/icons-material/Brightness7'
+import { logoutLocal } from '../api'
+import Logo from './Logo'
+import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded'
+import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded'
+import TranslateRoundedIcon from '@mui/icons-material/TranslateRounded'
+import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded'
+import SpaceDashboardRoundedIcon from '@mui/icons-material/SpaceDashboardRounded'
+import AccountCircleRoundedIcon from '@mui/icons-material/AccountCircleRounded'
 
 export default function Navbar() {
   const { t, toggle: toggleLang } = useLang()
   const { mode, toggle: toggleTheme } = useThemeMode()
   const nav = useNavigate()
-  const loc = useLocation()
+  useLocation() // re-render on navigation so the logged-in state stays current
   const [confirm, setConfirm] = useState(false)
   const loggedIn = !!localStorage.getItem('token')
-  useEffect(() => {}, [loc])
-  const logout = () => { localStorage.clear(); setConfirm(false); nav('/') }
+  const role = localStorage.getItem('role')
+  const dashboard = role === 'ROLE_PROVIDER' ? '/provider/dashboard' : '/client/dashboard'
+  const logout = () => { logoutLocal(); setConfirm(false); nav('/') }
+
   return (
-    <AppBar position="sticky" color="default" elevation={0} sx={{ borderBottom: 1, borderColor: 'divider' }}>
-      <Toolbar>
-        <Typography variant="h6" component={Link} to="/" sx={{ flexGrow: 1, fontWeight: 700, color: 'primary.main', textDecoration: 'none' }}>Rantevu</Typography>
-        <Button component={Link} to="/">{t('home')}</Button>
-        {!loggedIn && <Button component={Link} to="/auth">{t('login')}</Button>}
-        {!loggedIn && <Button component={Link} to="/auth" variant="contained" sx={{ ml: 1 }}>{t('register')}</Button>}
-        <Button onClick={toggleLang} sx={{ ml: 1, minWidth: 48 }}>{t('toggle')}</Button>
-        <IconButton onClick={toggleTheme} sx={{ ml: 1 }} color="inherit">
-          {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
-        </IconButton>
-        {loggedIn && <Button onClick={() => setConfirm(true)} sx={{ ml: 1 }}>{t('logout')}</Button>}
-      </Toolbar>
-      <Dialog open={confirm} onClose={() => setConfirm(false)}>
-        <DialogTitle>Are you sure you want to logout?</DialogTitle>
-        <DialogActions>
-          <Button onClick={() => setConfirm(false)}>Cancel</Button>
-          <Button onClick={logout} variant="contained">Logout</Button>
+    <Box component="header" sx={{ position: 'sticky', top: 0, zIndex: 1100, pt: { xs: 1.5, md: 2 } }}>
+      <Container maxWidth="lg">
+        <Paper sx={{ px: { xs: 1.5, sm: 2.5 }, py: 1, borderRadius: 5, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box component={Link} to={loggedIn ? dashboard : '/'} sx={{ textDecoration: 'none', flexGrow: 1 }}><Logo /></Box>
+
+          {loggedIn && (
+            <>
+              <Button component={Link} to={dashboard} color="inherit" startIcon={<SpaceDashboardRoundedIcon />} sx={{ display: { xs: 'none', sm: 'inline-flex' } }}>{t('dashboard')}</Button>
+              {role === 'ROLE_PROVIDER' && (
+                <Button component={Link} to="/profile" color="inherit" startIcon={<AccountCircleRoundedIcon />} sx={{ display: { xs: 'none', sm: 'inline-flex' } }}>{t('profile')}</Button>
+              )}
+            </>
+          )}
+
+          <Tooltip title={t('toggle') === 'EN' ? 'English' : 'Ελληνικά'}>
+            <Button onClick={toggleLang} color="inherit" startIcon={<TranslateRoundedIcon />} sx={{ minWidth: 0, px: 1.5 }}>{t('toggle')}</Button>
+          </Tooltip>
+          <IconButton onClick={toggleTheme} color="inherit" aria-label="toggle theme">
+            {mode === 'dark' ? <LightModeRoundedIcon /> : <DarkModeRoundedIcon />}
+          </IconButton>
+
+          {!loggedIn && <Button component={Link} to="/auth" variant="contained" sx={{ ml: 0.5 }}>{t('signIn')}</Button>}
+          {loggedIn && (
+            <Tooltip title={t('logout')}>
+              <IconButton onClick={() => setConfirm(true)} color="inherit" aria-label={t('logout')}><LogoutRoundedIcon /></IconButton>
+            </Tooltip>
+          )}
+        </Paper>
+      </Container>
+
+      <Dialog open={confirm} onClose={() => setConfirm(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700 }}>{t('logout')}</DialogTitle>
+        <DialogContent>{t('logoutConfirm')}</DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button onClick={() => setConfirm(false)} color="inherit">{t('cancel')}</Button>
+          <Button onClick={logout} variant="contained">{t('logout')}</Button>
         </DialogActions>
       </Dialog>
-    </AppBar>
+    </Box>
   )
 }

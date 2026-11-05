@@ -1,45 +1,163 @@
-import { useEffect, useState } from 'react'
-import { api } from '../api'
-import { Button, Card, CardContent, Container, TextField, Typography, Box } from '@mui/material'
+import { useEffect, useMemo, useState } from 'react'
+import { api, errorMessage } from '../api'
+import type { Appointment, Provider } from '../types'
+import { useLang } from '../i18n'
+import { CATEGORIES, categoryOf, normalize } from '../categories'
+import BookingDialog from '../components/BookingDialog'
+import { DateBlock, EmptyState, PersonAvatar, StatusChip } from '../components/ui'
+import { formatTime } from '../format'
+import { Alert, Box, Button, Chip, Container, InputAdornment, Paper, Skeleton, Snackbar, TextField, Typography } from '@mui/material'
+import { alpha } from '@mui/material/styles'
+import SearchRoundedIcon from '@mui/icons-material/SearchRounded'
+import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded'
+import EventAvailableRoundedIcon from '@mui/icons-material/EventAvailableRounded'
+import PersonSearchRoundedIcon from '@mui/icons-material/PersonSearchRounded'
+import AppsRoundedIcon from '@mui/icons-material/AppsRounded'
+import { delay } from '../style'
 
 export default function ClientDashboard() {
-  const [providers, setProviders] = useState<any[]>([])
-  const [appts, setAppts] = useState<any[]>([])
+  const { t, lang, locale } = useLang()
+  const [providers, setProviders] = useState<Provider[] | null>(null)
+  const [appts, setAppts] = useState<Appointment[]>([])
   const [q, setQ] = useState('')
+  const [cat, setCat] = useState<string | null>(null)
+  const [booking, setBooking] = useState<Provider | null>(null)
+  const [toast, setToast] = useState('')
+  const [err, setErr] = useState('')
+
+  const loadAppts = () => api<Appointment[]>('/api/appointments/mine').then(setAppts).catch(e => setErr(errorMessage(e)))
   useEffect(() => {
-    api('/api/providers').then(setProviders).catch(() => {})
-    api('/api/appointments/mine').then(setAppts).catch(() => {})
+    api<Provider[]>('/api/providers').then(setProviders).catch(e => { setProviders([]); setErr(errorMessage(e)) })
+    loadAppts()
   }, [])
-  const request = async (p: any) => {
-    const date = prompt('Appointment date (YYYY-MM-DDTHH:MM)')
-    if (!date) return
-    await api('/api/appointments', { method: 'POST', body: JSON.stringify({ providerId: p.userId, appointmentDate: date, notes: '' }) })
-    api('/api/appointments/mine').then(setAppts)
+
+  const filtered = useMemo(() => (providers ?? []).filter(p => {
+    if (cat && categoryOf(p.specialty)?.key !== cat) return false
+    const s = normalize(q.trim())
+    if (!s) return true
+    return [p.fullName, p.specialty, p.address].some(v => normalize(v || '').includes(s))
+  }), [providers, q, cat])
+
+  const specialtyById = useMemo(() => new Map((providers ?? []).map(p => [p.userId, p.specialty])), [providers])
+  const now = new Date()
+  const upcoming = appts.filter(a => new Date(a.appointmentDate) >= now).reverse()
+  const past = appts.filter(a => new Date(a.appointmentDate) < now)
+
+  const cancel = async (id: number) => {
+    try {
+      await api(`/api/appointments/${id}/status`, { method: 'PUT', body: JSON.stringify({ status: 'CANCELLED' }) })
+      setToast(t('updated')); loadAppts()
+    } catch (e) { setErr(errorMessage(e)) }
   }
-  const filtered = providers.filter(p => {
-    const s = q.toLowerCase()
-    return !s || (p.specialty || '').toLowerCase().includes(s) || (p.address || '').toLowerCase().includes(s) || (p.user?.fullName || '').toLowerCase().includes(s)
-  })
+
+  const firstName = (localStorage.getItem('fullName') || '').split(' ')[0]
+
   return (
-    <Container maxWidth="lg" sx={{ mt: 4 }}>
-      <Typography variant="h5" gutterBottom>Providers</Typography>
-      <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-        <TextField fullWidth placeholder="Search by name or location" value={q} onChange={e => setQ(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') e.preventDefault() }} />
-        <Button variant="contained" onClick={() => {}}>Search</Button>
+    <Container maxWidth="lg" sx={{ pt: { xs: 4, md: 6 } }}>
+      <Box className="reveal" sx={{ mb: 4 }}>
+        <Typography variant="h3" sx={{ fontSize: { xs: 30, md: 40 } }}>{t('hello', { name: '' })}<span className="gradient-text">{firstName}</span></Typography>
+        <Typography color="text.secondary" sx={{ fontSize: 17 }}>{t('clientSub')}</Typography>
       </Box>
-      {filtered.length === 0 && <Typography color="text.secondary" sx={{ mb: 2 }}>No providers available</Typography>}
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(260px,1fr))', gap: 2, mb: 4 }}>
-        {filtered.map(p => (
-          <Card key={p.userId}><CardContent>
-            <Typography variant="h6">{p.specialty || 'Provider'}</Typography>
-            <Typography color="text.secondary">{p.address}</Typography>
-            <Typography>€{p.pricePerVisit}</Typography>
-            <Button sx={{ mt: 1 }} variant="contained" onClick={() => request(p)}>Request appointment</Button>
-          </CardContent></Card>
-        ))}
+
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 360px' }, gap: 3, alignItems: 'start' }}>
+        <Box sx={{ minWidth: 0 }}>
+          <Paper className="reveal" style={delay(0.06)} sx={{ p: 2, mb: 3 }}>
+            <TextField fullWidth placeholder={t('searchPh')} value={q} onChange={e => setQ(e.target.value)}
+              slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchRoundedIcon /></InputAdornment> } }} />
+            <Box sx={{ display: 'flex', gap: 1, mt: 2, overflowX: 'auto', pb: 0.5, scrollbarWidth: 'thin' }}>
+              <Chip icon={<AppsRoundedIcon />} label={t('all')} clickable onClick={() => setCat(null)} color={cat === null ? 'primary' : 'default'} variant={cat === null ? 'filled' : 'outlined'} />
+              {CATEGORIES.map(c => {
+                const Icon = c.icon
+                const active = cat === c.key
+                return (
+                  <Chip key={c.key} icon={<Icon style={{ color: active ? '#fff' : c.color }} />} label={c[lang]} clickable onClick={() => setCat(active ? null : c.key)}
+                    variant={active ? 'filled' : 'outlined'} sx={active ? { backgroundColor: c.color, color: '#fff', '&:hover': { backgroundColor: c.color } } : undefined} />
+                )
+              })}
+            </Box>
+          </Paper>
+
+          {err && <Alert severity="error" onClose={() => setErr('')} sx={{ mb: 2 }}>{t(err)}</Alert>}
+          {providers && <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontWeight: 600 }}>{t('found', { n: filtered.length })}</Typography>}
+
+          {!providers && (
+            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 2 }}>
+              {[0, 1, 2, 3].map(i => <Skeleton key={i} variant="rounded" height={210} sx={{ borderRadius: 5 }} />)}
+            </Box>
+          )}
+          {providers && filtered.length === 0 && <EmptyState icon={<PersonSearchRoundedIcon fontSize="large" />} title={t('noProviders')} desc={t('noProvidersDesc')} />}
+
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 2 }}>
+            {filtered.map((p, i) => {
+              const c = categoryOf(p.specialty)
+              return (
+                <Paper key={p.userId} className="reveal lift" style={delay(0.1 + Math.min(i, 8) * 0.05)}
+                  sx={{ p: 2.5, display: 'flex', flexDirection: 'column', gap: 1.5, borderRadius: 5 }}>
+                  <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+                    <PersonAvatar name={p.fullName} specialty={p.specialty} size={52} />
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography sx={{ fontWeight: 700, fontSize: 17 }} noWrap>{p.fullName}</Typography>
+                      {p.specialty && (
+                        <Typography variant="body2" noWrap sx={{ fontWeight: 600, color: c?.color ?? 'secondary.main' }}>{p.specialty}</Typography>
+                      )}
+                    </Box>
+                  </Box>
+                  {p.bio && (
+                    <Typography variant="body2" color="text.secondary" sx={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{p.bio}</Typography>
+                  )}
+                  {p.address && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary' }}>
+                      <PlaceRoundedIcon fontSize="small" /><Typography variant="body2" noWrap>{p.address}</Typography>
+                    </Box>
+                  )}
+                  <Box sx={{ mt: 'auto', pt: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: 1, borderColor: 'divider' }}>
+                    <Typography>
+                      {p.pricePerVisit != null && <><Box component="span" sx={{ fontWeight: 800, fontSize: 20 }}>€{p.pricePerVisit}</Box> <Box component="span" sx={{ color: 'text.secondary', fontSize: 13 }}>{t('perVisit')}</Box></>}
+                    </Typography>
+                    <Button variant="contained" size="small" startIcon={<EventAvailableRoundedIcon />} onClick={() => setBooking(p)}>{t('book')}</Button>
+                  </Box>
+                </Paper>
+              )
+            })}
+          </Box>
+        </Box>
+
+        <Paper className="reveal" style={delay(0.12)} sx={{ p: 2.5, position: { md: 'sticky' }, top: { md: 104 }, order: { xs: -1, md: 0 } }}>
+          <Typography variant="h6" sx={{ mb: 2 }}>{t('myAppointments')}</Typography>
+          {appts.length === 0 && <EmptyState icon={<EventAvailableRoundedIcon fontSize="large" />} title={t('noAppointments')} desc={t('noAppointmentsDesc')} />}
+          {[{ label: t('upcoming'), list: upcoming }, { label: t('past'), list: past.slice(0, 5) }].map(group => group.list.length > 0 && (
+            <Box key={group.label} sx={{ mb: 2 }}>
+              <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 700 }}>{group.label}</Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25, mt: 0.5 }}>
+                {group.list.map(a => {
+                  const d = new Date(a.appointmentDate)
+                  const open = (a.status === 'PENDING' || a.status === 'ACCEPTED') && d >= now
+                  return (
+                    <Box key={a.id} sx={theme => ({ display: 'flex', gap: 1.5, p: 1.25, borderRadius: 3.5, backgroundColor: alpha(theme.palette.text.primary, 0.035), opacity: d < now ? 0.75 : 1 })}>
+                      <DateBlock date={d} />
+                      <Box sx={{ minWidth: 0, flex: 1 }}>
+                        <Typography sx={{ fontWeight: 700 }} noWrap>{a.provider.fullName}</Typography>
+                        <Typography variant="body2" color="text.secondary" noWrap>
+                          {formatTime(d, locale)}{specialtyById.get(a.provider.id) ? ` · ${specialtyById.get(a.provider.id)}` : ''}
+                        </Typography>
+                        <Box sx={{ mt: 0.75, display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <StatusChip status={a.status} />
+                          {open && <Button size="small" color="error" onClick={() => cancel(a.id)} sx={{ ml: 'auto', minWidth: 0 }}>{t('cancelAppt')}</Button>}
+                        </Box>
+                      </Box>
+                    </Box>
+                  )
+                })}
+              </Box>
+            </Box>
+          ))}
+        </Paper>
       </Box>
-      <Typography variant="h5" gutterBottom>My appointments</Typography>
-      {appts.map(a => <Card key={a.id} sx={{ mb: 1 }}><CardContent><Typography>{a.appointmentDate} — {a.status}</Typography></CardContent></Card>)}
+
+      <BookingDialog key={booking?.userId ?? 'none'} provider={booking} onClose={() => setBooking(null)} onBooked={() => { setBooking(null); setToast(t('requestSent')); loadAppts() }} />
+      <Snackbar open={!!toast} autoHideDuration={3000} onClose={() => setToast('')} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+        <Alert severity="success" variant="filled" onClose={() => setToast('')}>{toast}</Alert>
+      </Snackbar>
     </Container>
   )
 }

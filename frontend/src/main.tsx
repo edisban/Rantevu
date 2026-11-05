@@ -1,22 +1,20 @@
-import { StrictMode } from 'react'
+import { StrictMode, useEffect, useMemo } from 'react'
 import { createRoot } from 'react-dom/client'
-import { ThemeProvider, createTheme, CssBaseline } from '@mui/material'
+import { ThemeProvider, CssBaseline } from '@mui/material'
 import App from './App.tsx'
 import { LangProvider } from './i18n'
 import { ThemeModeProvider, useThemeMode } from './themeMode'
+import { BRAND, buildTheme } from './theme'
+import './index.css'
 
 function ThemedApp() {
   const { mode } = useThemeMode()
-  const theme = createTheme({
-    palette: {
-      mode,
-      primary: { main: '#5a1a2c', contrastText: '#fff' },
-      secondary: { main: '#8b2e4a' },
-      background: mode === 'dark' ? { default: '#0f0a0c', paper: '#1a1214' } : { default: '#faf7f8', paper: '#ffffff' }
-    },
-    typography: { fontFamily: '"Inter", system-ui, -apple-system, sans-serif', h5: { fontWeight: 600 }, h6: { fontWeight: 600 } },
-    shape: { borderRadius: 12 }
-  })
+  const theme = useMemo(() => buildTheme(mode), [mode])
+  // Plain CSS (aurora, intro, gradients) switches its colors on this attribute
+  useEffect(() => {
+    document.documentElement.dataset.theme = mode
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', mode === 'dark' ? BRAND.bgDark : BRAND.bgLight)
+  }, [mode])
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
