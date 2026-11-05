@@ -92,7 +92,7 @@ jobs:
             type=sha
       # Pull requests only build (proves the Dockerfile works); main also pushes
       - name: Build${{ env.PUBLISH == 'true' && ' and push' || '' }}
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ${{ matrix.app }}
           push: ${{ env.PUBLISH == 'true' }}
