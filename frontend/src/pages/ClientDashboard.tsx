@@ -59,13 +59,13 @@ export default function ClientDashboard() {
   const firstName = (localStorage.getItem('fullName') || '').split(' ')[0]
 
   return (
-    <Container maxWidth="lg" sx={{ pt: { xs: 4, md: 6 } }}>
+    <Container sx={{ pt: { xs: 4, md: 6 } }}>
       <Box className="reveal" sx={{ mb: 4 }}>
         <Typography variant="h3" sx={{ fontSize: { xs: 30, md: 40 } }}>{t('hello', { name: '' })}<span className="gradient-text">{firstName}</span></Typography>
         <Typography color="text.secondary" sx={{ fontSize: 17 }}>{t('clientSub')}</Typography>
       </Box>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 360px' }, gap: 3, alignItems: 'start' }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 360px', xl: '1fr 420px' }, gap: 3, alignItems: 'start' }}>
         <Box sx={{ minWidth: 0 }}>
           <Paper className="reveal" style={delay(0.06)} sx={{ p: 2, mb: 3 }}>
             <TextField fullWidth placeholder={t('searchPh')} value={q} onChange={e => setQ(e.target.value)}

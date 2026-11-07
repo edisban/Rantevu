@@ -38,13 +38,13 @@ export default function ProfilePage() {
   const cat = categoryOf(form.specialty)
 
   return (
-    <Container maxWidth="md" sx={{ pt: { xs: 4, md: 6 } }}>
+    <Container sx={{ pt: { xs: 4, md: 6 } }}>
       <Box className="reveal" sx={{ mb: 4 }}>
         <Typography variant="h3" sx={{ fontSize: { xs: 30, md: 40 } }}>{t('profile')}</Typography>
         <Typography color="text.secondary" sx={{ fontSize: 17 }}>{isProvider ? t('profileSub') : t('profileSubClient')}</Typography>
       </Box>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: isProvider ? '1fr 280px' : '1fr' }, gap: 3, alignItems: 'start' }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: isProvider ? '1fr 320px' : '1fr' }, gap: 3, alignItems: 'start' }}>
         <Paper className="reveal" style={delay(0.06)} sx={{ p: { xs: 3, sm: 4 } }}>
           {err && <Alert severity="error" sx={{ mb: 2 }}>{t(err)}</Alert>}
           <Box component="form" onSubmit={save} sx={{ display: 'flex', flexDirection: 'column', gap: 2.25 }}>

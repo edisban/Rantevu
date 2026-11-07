@@ -54,7 +54,7 @@ export default function ProviderDashboard() {
   const firstName = (localStorage.getItem('fullName') || '').split(' ')[0]
 
   return (
-    <Container maxWidth="lg" sx={{ pt: { xs: 4, md: 6 } }}>
+    <Container sx={{ pt: { xs: 4, md: 6 } }}>
       <Box className="reveal" sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'flex-end', justifyContent: 'space-between', mb: 4 }}>
         <Box>
           <Typography variant="h3" sx={{ fontSize: { xs: 30, md: 40 } }}>{t('hello', { name: '' })}<span className="gradient-text">{firstName}</span></Typography>

@@ -49,6 +49,17 @@ export function buildTheme(mode: 'light' | 'dark') {
           root: { borderRadius: 18, backgroundImage: 'none', backgroundColor: glass, backdropFilter: blur, WebkitBackdropFilter: blur, border: `1px solid ${border}`, boxShadow: shadow },
         },
       },
+      // Pages fill the window up to 1536px (MUI's xl), so huge screens don't stretch content too far;
+      // side padding grows with the screen so content never touches the edges
+      MuiContainer: {
+        defaultProps: { maxWidth: 'xl' },
+        styleOverrides: {
+          root: ({ theme }) => ({
+            [theme.breakpoints.up('md')]: { paddingLeft: 40, paddingRight: 40 },
+            [theme.breakpoints.up('xl')]: { paddingLeft: 64, paddingRight: 64 },
+          }),
+        },
+      },
       MuiCard: { defaultProps: { elevation: 0 }, styleOverrides: { root: { borderRadius: 22 } } },
       MuiDialog: { styleOverrides: { paper: { backgroundColor: glassStrong, borderRadius: 24 } } },
       MuiMenu: { styleOverrides: { paper: { backgroundColor: glassStrong } } },

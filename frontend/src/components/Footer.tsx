@@ -6,7 +6,7 @@ export default function Footer() {
   const { t } = useLang()
   return (
     <Box component="footer" sx={{ mt: 8, py: 4, borderTop: 1, borderColor: 'divider' }}>
-      <Container maxWidth="lg" sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center', justifyContent: 'space-between' }}>
+      <Container sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center', justifyContent: 'space-between' }}>
         <Logo />
         <Typography variant="body2" color="text.secondary">© 2026 Rantevu · {t('footer')}</Typography>
       </Container>

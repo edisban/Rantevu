@@ -197,11 +197,11 @@ export default function MessagesPage() {
   )
 
   return (
-    <Container maxWidth="lg" sx={{ pt: { xs: 3, md: 5 } }}>
+    <Container sx={{ pt: { xs: 3, md: 5 } }}>
       {err && <Alert severity="error" onClose={() => setErr('')} sx={{ mb: 2 }}>{t(err)}</Alert>}
       <Paper className="reveal" sx={{
         p: 0, overflow: 'hidden', height: { xs: 'calc(100dvh - 140px)', md: 'calc(100dvh - 190px)' }, minHeight: 480,
-        display: 'grid', gridTemplateColumns: { xs: '1fr', md: '330px 1fr' }, gridTemplateRows: 'minmax(0, 1fr)',
+        display: 'grid', gridTemplateColumns: { xs: '1fr', md: '330px 1fr', xl: '380px 1fr' }, gridTemplateRows: 'minmax(0, 1fr)',
       }}>
         {/* On phones show either the list or the open conversation */}
         <Box sx={{ display: { xs: active ? 'none' : 'flex', md: 'flex' }, flexDirection: 'column', minHeight: 0 }}>{list}</Box>

@@ -28,7 +28,7 @@ export default function Navbar() {
 
   return (
     <Box component="header" sx={{ position: 'sticky', top: 0, zIndex: 1100, pt: { xs: 1.5, md: 2 } }}>
-      <Container maxWidth="lg">
+      <Container>
         <Paper sx={{ px: { xs: 1.5, sm: 2.5 }, py: 1, borderRadius: 5, display: 'flex', alignItems: 'center', gap: 1 }}>
           <Box component={Link} to={loggedIn ? dashboard : '/'} sx={{ textDecoration: 'none', flexGrow: 1 }}><Logo /></Box>
 

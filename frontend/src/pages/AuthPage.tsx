@@ -34,7 +34,7 @@ export default function AuthPage() {
   ]
 
   return (
-    <Container maxWidth="lg" sx={{ pt: { xs: 5, md: 9 } }}>
+    <Container sx={{ pt: { xs: 5, md: 9 } }}>
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1.15fr 0.85fr' }, gap: { xs: 5, md: 7 }, alignItems: 'center' }}>
         <Box>
           <Chip className="reveal" icon={<AutoAwesomeRoundedIcon />} label={t('heroBadge')} color="primary" variant="outlined"
@@ -67,7 +67,8 @@ export default function AuthPage() {
           </Box>
         </Box>
 
-        <Box className="reveal" style={delay(0.2)}>
+        {/* A form reads best at a fixed size, so the card stops growing on wide screens */}
+        <Box className="reveal" style={delay(0.2)} sx={{ width: '100%', maxWidth: 520, justifySelf: { md: 'end' } }}>
           {loggedInRole
             ? (
               <Paper sx={{ p: 4, textAlign: 'center' }}>
