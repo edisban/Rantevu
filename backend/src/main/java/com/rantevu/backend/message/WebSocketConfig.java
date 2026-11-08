@@ -1,5 +1,6 @@
 package com.rantevu.backend.message;
 
+import com.rantevu.backend.appointment.AppointmentNotifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;
@@ -14,15 +15,19 @@ import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBr
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 import java.util.List;
+import java.util.Set;
 
 /**
- * Live delivery only: clients subscribe to /user/queue/messages; sending goes through the REST API.
+ * Live delivery only: clients subscribe to /user/queue/messages (chat) and /user/queue/appointments
+ * (booking changes); sending always goes through the REST API.
  * The handshake to /ws is an ordinary HTTP request, so the JWT cookie authenticates it in the
  * Spring Security filter chain and that user becomes the STOMP session's user.
  */
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+    private static final Set<String> OWN_QUEUES = Set.of("/user" + MessageService.USER_QUEUE, "/user" + AppointmentNotifier.USER_QUEUE);
+
     private final List<String> allowedOrigins;
 
     public WebSocketConfig(@Value("${app.cors.allowed-origins}") List<String> allowedOrigins) {
@@ -53,10 +58,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                     case CONNECT -> {
                         if (stomp.getUser() == null) throw new MessageDeliveryException("Not signed in");
                     }
-                    // Only a user's own queue can be subscribed to, and clients never publish
+                    // Only a user's own queues (chat, appointment updates) can be subscribed to, and clients never publish
                     case SUBSCRIBE -> {
                         String dest = stomp.getDestination();
-                        if (stomp.getUser() == null || dest == null || !dest.equals("/user" + MessageService.USER_QUEUE))
+                        if (stomp.getUser() == null || dest == null || !OWN_QUEUES.contains(dest))
                             throw new MessageDeliveryException("Subscription not allowed");
                     }
                     case SEND -> throw new MessageDeliveryException("Send messages through the REST API");

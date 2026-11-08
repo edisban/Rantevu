@@ -4,6 +4,7 @@ import type { Appointment, Provider } from '../types'
 import { useLang } from '../i18n'
 import { CATEGORIES, categoryOf, normalize } from '../categories'
 import BookingDialog from '../components/BookingDialog'
+import { useChat } from '../chat'
 import { DateBlock, EmptyState, PersonAvatar, StatusChip } from '../components/ui'
 import { formatTime } from '../format'
 import { Alert, Box, Button, Chip, Container, IconButton, InputAdornment, Paper, Skeleton, Snackbar, TextField, Tooltip, Typography } from '@mui/material'
@@ -28,6 +29,8 @@ export default function ClientDashboard() {
   const nav = useNavigate()
   const [toast, setToast] = useState(() => (location.state as { toast?: string } | null)?.toast ?? '')
   const [err, setErr] = useState('')
+  const { onAppointment } = useChat()
+  const me = Number(localStorage.getItem('userId'))
 
   const loadAppts = () => api<Appointment[]>('/api/appointments/mine').then(setAppts).catch(e => setErr(errorMessage(e)))
   useEffect(() => {
@@ -36,6 +39,12 @@ export default function ClientDashboard() {
     // Clear the one-time message so a page refresh doesn't show it again
     if (location.state) nav(location.pathname, { replace: true, state: null })
   }, [])
+
+  // Live updates: refresh the list when the professional accepts, declines or cancels
+  useEffect(() => onAppointment(e => {
+    loadAppts()
+    if (e.changedBy !== me) setToast(t('liveChanged', { name: e.appointment.provider.fullName, status: t(e.appointment.status) }))
+  }), [onAppointment, t])
 
   const filtered = useMemo(() => (providers ?? []).filter(p => {
     if (cat && categoryOf(p.specialty)?.key !== cat) return false

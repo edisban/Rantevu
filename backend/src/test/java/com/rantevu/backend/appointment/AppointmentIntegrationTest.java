@@ -2,7 +2,13 @@ package com.rantevu.backend.appointment;
 
 import com.rantevu.backend.IntegrationTest;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.empty;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -75,6 +81,22 @@ class AppointmentIntegrationTest extends IntegrationTest {
         putAs(provider, url, statusBody("ACCEPTED")).andExpect(status().isOk()).andExpect(jsonPath("$.status").value("ACCEPTED"));
         putAs(provider, url, statusBody("REJECTED")).andExpect(status().isConflict());
         putAs(client, url, statusBody("CANCELLED")).andExpect(status().isOk());
+    }
+
+    @Test
+    void bookingsAndDecisionsArePushedLiveToBothPeople() throws Exception {
+        var client = client();
+        var provider = provider();
+        Long id = bookOk(client, provider);
+        // The new request reaches the provider straight away
+        verify(broker).convertAndSendToUser(eq(provider.id().toString()), eq(AppointmentNotifier.USER_QUEUE), any());
+
+        putAs(provider, "/api/appointments/" + id + "/status", statusBody("ACCEPTED")).andExpect(status().isOk());
+        var events = ArgumentCaptor.forClass(Object.class);
+        verify(broker, times(2)).convertAndSendToUser(eq(client.id().toString()), eq(AppointmentNotifier.USER_QUEUE), events.capture());
+        var accepted = (AppointmentNotifier.AppointmentEvent) events.getValue();
+        assertThat(accepted.appointment().status()).isEqualTo(AppointmentStatus.ACCEPTED);
+        assertThat(accepted.changedBy()).isEqualTo(provider.id());
     }
 
     @Test

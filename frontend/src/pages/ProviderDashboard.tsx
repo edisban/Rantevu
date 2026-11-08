@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { api, errorMessage } from '../api'
+import { useChat } from '../chat'
 import type { Appointment, ProfileResponse, Provider } from '../types'
 import { useLang } from '../i18n'
 import { DateBlock, EmptyState, PersonAvatar, StatTile, StatusChip } from '../components/ui'
@@ -28,6 +29,8 @@ export default function ProviderDashboard() {
   // Pages that redirect here (e.g. after saving the profile) can pass a message key to show
   const [toast, setToast] = useState(() => (location.state as { toast?: string } | null)?.toast ?? '')
   const [err, setErr] = useState('')
+  const { onAppointment } = useChat()
+  const me = Number(localStorage.getItem('userId'))
 
   const load = () => api<Appointment[]>('/api/appointments/mine').then(setAppts).catch(e => setErr(errorMessage(e)))
   useEffect(() => {
@@ -36,6 +39,14 @@ export default function ProviderDashboard() {
     // Clear the one-time message so a page refresh doesn't show it again
     if (location.state) nav(location.pathname, { replace: true, state: null })
   }, [])
+
+  // Live updates: new requests and cancellations appear without reloading
+  useEffect(() => onAppointment(e => {
+    load()
+    if (e.changedBy === me) return
+    const name = e.appointment.client.fullName
+    setToast(e.appointment.status === 'PENDING' ? t('liveNew', { name }) : t('liveChanged', { name, status: t(e.appointment.status) }))
+  }), [onAppointment, t])
 
   const setStatus = async (id: number, status: string) => {
     try {

@@ -20,7 +20,10 @@ import static com.rantevu.backend.appointment.AppointmentRepository.ACTIVE;
 public class AppointmentController {
     private final AppointmentRepository repo;
     private final UserRepository users;
-    public AppointmentController(AppointmentRepository repo, UserRepository users) { this.repo = repo; this.users = users; }
+    private final AppointmentNotifier notifier;
+    public AppointmentController(AppointmentRepository repo, UserRepository users, AppointmentNotifier notifier) {
+        this.repo = repo; this.users = users; this.notifier = notifier;
+    }
 
     @PostMapping
     public AppointmentDto create(Authentication auth, @Valid @RequestBody AppointmentRequest req) {
@@ -37,7 +40,9 @@ public class AppointmentController {
         a.setAppointmentDate(req.appointmentDate());
         a.setNotes(req.notes());
         a.setStatus(AppointmentStatus.PENDING);
-        return AppointmentDto.from(repo.saveAndFlush(a));
+        var saved = AppointmentDto.from(repo.saveAndFlush(a));
+        notifier.changed(saved, saved.client().id());
+        return saved;
     }
 
     @GetMapping("/mine")
@@ -65,7 +70,9 @@ public class AppointmentController {
         };
         if (!allowed) throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot change status from " + current + " to " + next);
         a.setStatus(next);
-        return AppointmentDto.from(repo.save(a));
+        var saved = AppointmentDto.from(repo.save(a));
+        notifier.changed(saved, uid);
+        return saved;
     }
 
     private static boolean hasRole(Authentication auth, Role role) {

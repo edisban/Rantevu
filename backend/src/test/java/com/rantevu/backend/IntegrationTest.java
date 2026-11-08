@@ -8,6 +8,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
@@ -32,6 +34,10 @@ public abstract class IntegrationTest {
 
     @Autowired
     protected MockMvc mvc;
+
+    // Real broker, but every live push is recorded so tests can check who was notified
+    @MockitoSpyBean
+    protected SimpMessagingTemplate broker;
 
     protected record Account(Long id, String username, Cookie cookie) {}
 
