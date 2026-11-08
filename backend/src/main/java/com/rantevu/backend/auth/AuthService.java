@@ -51,7 +51,13 @@ public class AuthService {
             throw new IllegalArgumentException("Bad credentials");
         }
         limiter.recordSuccess(r.username());
-        return session(user.get());
+        // Older accounts still have a BCrypt hash: re-hash with Argon2id now that we know the password
+        var u = user.get();
+        if (encoder.upgradeEncoding(u.getPassword())) {
+            u.setPassword(encoder.encode(r.password()));
+            users.save(u);
+        }
+        return session(u);
     }
 
     private User createUser(String username, String email, String password, String fullName, Role role) {

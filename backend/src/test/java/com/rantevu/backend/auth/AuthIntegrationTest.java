@@ -3,6 +3,9 @@ package com.rantevu.backend.auth;
 import com.rantevu.backend.IntegrationTest;
 import com.rantevu.backend.security.AuthCookies;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 
@@ -14,6 +17,31 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 class AuthIntegrationTest extends IntegrationTest {
+
+    @Autowired
+    JdbcTemplate jdbc;
+
+    private String storedHash(Long userId) {
+        return jdbc.queryForObject("select password_hash from users where id = ?", String.class, userId);
+    }
+
+    @Test
+    void newPasswordsAreHashedWithArgon2id() throws Exception {
+        var user = client();
+        assertThat(storedHash(user.id())).startsWith("{argon2}$argon2id$");
+    }
+
+    @Test
+    void olderBcryptPasswordsStillWorkAndAreUpgradedAtLogin() throws Exception {
+        var user = client();
+        // Simulate an account created before the switch: a plain BCrypt hash without a {prefix}
+        jdbc.update("update users set password_hash = ? where id = ?", new BCryptPasswordEncoder().encode(PASSWORD), user.id());
+
+        mvc.perform(post("/api/auth/login").with(xsrf()).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"%s\",\"password\":\"%s\"}".formatted(user.username(), PASSWORD)))
+            .andExpect(status().isOk());
+        assertThat(storedHash(user.id())).startsWith("{argon2}$argon2id$");
+    }
 
     @Test
     void registerSetsHttpOnlyCookieAndKeepsTokenOutOfTheBody() throws Exception {
