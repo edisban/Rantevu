@@ -7,11 +7,13 @@ import com.rantevu.backend.security.LoginAttemptLimiter;
 import com.rantevu.backend.user.Role;
 import com.rantevu.backend.user.User;
 import com.rantevu.backend.user.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
 public class AuthService {
     // A signed-in result: the JWT (goes into the cookie) and what the frontend may show
     public record Session(String token, AuthResponse user) {}
@@ -21,10 +23,6 @@ public class AuthService {
     private final PasswordEncoder encoder;
     private final JwtService jwt;
     private final LoginAttemptLimiter limiter;
-
-    public AuthService(UserRepository users, ProviderProfileRepository profiles, PasswordEncoder encoder, JwtService jwt, LoginAttemptLimiter limiter) {
-        this.users = users; this.profiles = profiles; this.encoder = encoder; this.jwt = jwt; this.limiter = limiter;
-    }
 
     public Session registerClient(ClientRegisterRequest r) {
         var u = createUser(r.username(), r.email(), r.password(), r.fullName(), Role.ROLE_CLIENT);

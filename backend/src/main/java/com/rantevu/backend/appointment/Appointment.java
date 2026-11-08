@@ -2,10 +2,14 @@ package com.rantevu.backend.appointment;
 
 import com.rantevu.backend.user.User;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "appointments")
+@Getter
+@Setter
 public class Appointment {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -20,17 +24,4 @@ public class Appointment {
     private AppointmentStatus status = AppointmentStatus.PENDING;
     @Column(columnDefinition = "TEXT")
     private String notes;
-
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    public User getClient() { return client; }
-    public void setClient(User client) { this.client = client; }
-    public User getProvider() { return provider; }
-    public void setProvider(User provider) { this.provider = provider; }
-    public LocalDateTime getAppointmentDate() { return appointmentDate; }
-    public void setAppointmentDate(LocalDateTime appointmentDate) { this.appointmentDate = appointmentDate; }
-    public AppointmentStatus getStatus() { return status; }
-    public void setStatus(AppointmentStatus status) { this.status = status; }
-    public String getNotes() { return notes; }
-    public void setNotes(String notes) { this.notes = notes; }
 }

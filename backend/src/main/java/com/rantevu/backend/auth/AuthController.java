@@ -3,6 +3,7 @@ package com.rantevu.backend.auth;
 import com.rantevu.backend.security.AuthCookies;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.web.csrf.CsrfToken;
@@ -10,10 +11,10 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
+@RequiredArgsConstructor
 public class AuthController {
     private final AuthService service;
     private final AuthCookies cookies;
-    public AuthController(AuthService service, AuthCookies cookies) { this.service = service; this.cookies = cookies; }
 
     @PostMapping("/register/client")
     public ResponseEntity<AuthResponse> registerClient(@Valid @RequestBody ClientRegisterRequest r) {

@@ -1,7 +1,7 @@
 package com.rantevu.backend.security;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
@@ -21,14 +21,14 @@ import java.util.Locale;
  * Redis, they survive backend restarts and are shared by every backend instance.
  */
 @Component
+@Slf4j
+@RequiredArgsConstructor
 public class LoginAttemptLimiter {
     static final int MAX_PER_USERNAME = 5;
     static final int MAX_PER_IP = 30;
     static final Duration WINDOW = Duration.ofMinutes(15);
-    private static final Logger log = LoggerFactory.getLogger(LoginAttemptLimiter.class);
 
     private final StringRedisTemplate redis;
-    public LoginAttemptLimiter(StringRedisTemplate redis) { this.redis = redis; }
 
     public void checkAllowed(String username, String ip) {
         if (count(userKey(username)) >= MAX_PER_USERNAME || count(ipKey(ip)) >= MAX_PER_IP)

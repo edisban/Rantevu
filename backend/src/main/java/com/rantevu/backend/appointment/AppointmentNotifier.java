@@ -1,5 +1,6 @@
 package com.rantevu.backend.appointment;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 
@@ -8,11 +9,11 @@ import org.springframework.stereotype.Component;
  * dashboards update without a reload. Each user subscribes to /user/queue/appointments.
  */
 @Component
+@RequiredArgsConstructor
 public class AppointmentNotifier {
     public static final String USER_QUEUE = "/queue/appointments";
 
     private final SimpMessagingTemplate broker;
-    public AppointmentNotifier(SimpMessagingTemplate broker) { this.broker = broker; }
 
     /** What changed and who did it, so the other person can be told while the actor isn't. */
     public record AppointmentEvent(AppointmentDto appointment, Long changedBy) {}

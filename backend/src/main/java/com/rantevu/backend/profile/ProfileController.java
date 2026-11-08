@@ -11,15 +11,16 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/profile")
+@RequiredArgsConstructor
 public class ProfileController {
     private final UserRepository users;
     private final ProviderProfileRepository profiles;
-    public ProfileController(UserRepository users, ProviderProfileRepository profiles) { this.users = users; this.profiles = profiles; }
 
     @GetMapping
     public ProfileResponse get(Authentication auth) {

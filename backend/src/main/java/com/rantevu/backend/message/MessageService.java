@@ -5,6 +5,7 @@ import com.rantevu.backend.provider.ProviderProfile;
 import com.rantevu.backend.provider.ProviderProfileRepository;
 import com.rantevu.backend.user.User;
 import com.rantevu.backend.user.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class MessageService {
     // STOMP destination each user subscribes to as /user/queue/messages
     static final String USER_QUEUE = "/queue/messages";
@@ -25,11 +27,6 @@ public class MessageService {
     private final UserRepository users;
     private final ProviderProfileRepository profiles;
     private final SimpMessagingTemplate broker;
-
-    public MessageService(MessageRepository messages, AppointmentRepository appointments, UserRepository users,
-                          ProviderProfileRepository profiles, SimpMessagingTemplate broker) {
-        this.messages = messages; this.appointments = appointments; this.users = users; this.profiles = profiles; this.broker = broker;
-    }
 
     @Transactional(readOnly = true)
     public List<ContactDto> contacts(Long me) {

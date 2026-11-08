@@ -4,6 +4,7 @@ import com.rantevu.backend.security.AuthCookies;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -11,10 +12,10 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/account")
+@RequiredArgsConstructor
 public class AccountController {
     private final AccountService accounts;
     private final AuthCookies cookies;
-    public AccountController(AccountService accounts, AuthCookies cookies) { this.accounts = accounts; this.cookies = cookies; }
 
     // Permanently deletes the signed-in user's account and everything tied to it, then signs them out
     @DeleteMapping

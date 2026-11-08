@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -17,13 +18,11 @@ import static com.rantevu.backend.appointment.AppointmentRepository.ACTIVE;
 
 @RestController
 @RequestMapping("/api/appointments")
+@RequiredArgsConstructor
 public class AppointmentController {
     private final AppointmentRepository repo;
     private final UserRepository users;
     private final AppointmentNotifier notifier;
-    public AppointmentController(AppointmentRepository repo, UserRepository users, AppointmentNotifier notifier) {
-        this.repo = repo; this.users = users; this.notifier = notifier;
-    }
 
     @PostMapping
     public AppointmentDto create(Authentication auth, @Valid @RequestBody AppointmentRequest req) {

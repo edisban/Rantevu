@@ -3,6 +3,7 @@ package com.rantevu.backend.message;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -12,9 +13,9 @@ import java.util.Map;
 // Messages are sent over REST (validation, auth and errors come for free) and delivered live over STOMP
 @RestController
 @RequestMapping("/api/messages")
+@RequiredArgsConstructor
 public class MessageController {
     private final MessageService service;
-    public MessageController(MessageService service) { this.service = service; }
 
     @GetMapping("/contacts")
     public List<ContactDto> contacts(Authentication auth) { return service.contacts(me(auth)); }

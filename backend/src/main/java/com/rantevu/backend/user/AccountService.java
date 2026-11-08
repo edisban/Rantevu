@@ -4,11 +4,13 @@ import com.rantevu.backend.appointment.AppointmentRepository;
 import com.rantevu.backend.message.MessageRepository;
 import com.rantevu.backend.provider.ProviderProfileRepository;
 import com.rantevu.backend.security.LoginAttemptLimiter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
 public class AccountService {
     private final UserRepository users;
     private final ProviderProfileRepository profiles;
@@ -16,12 +18,6 @@ public class AccountService {
     private final MessageRepository messages;
     private final PasswordEncoder encoder;
     private final LoginAttemptLimiter limiter;
-
-    public AccountService(UserRepository users, ProviderProfileRepository profiles, AppointmentRepository appointments,
-                          MessageRepository messages, PasswordEncoder encoder, LoginAttemptLimiter limiter) {
-        this.users = users; this.profiles = profiles; this.appointments = appointments;
-        this.messages = messages; this.encoder = encoder; this.limiter = limiter;
-    }
 
     /**
      * Deletes the user and every row that references them, in foreign-key order, in one transaction:

@@ -1,6 +1,7 @@
 package com.rantevu.backend.provider;
 
 import com.rantevu.backend.appointment.AppointmentRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -8,11 +9,11 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/providers")
+@RequiredArgsConstructor
 public class ProviderController {
     private static final DateTimeFormatter HH_MM = DateTimeFormatter.ofPattern("HH:mm");
     private final ProviderProfileRepository profiles;
     private final AppointmentRepository appointments;
-    public ProviderController(ProviderProfileRepository profiles, AppointmentRepository appointments) { this.profiles = profiles; this.appointments = appointments; }
 
     @GetMapping
     public List<ProviderDto> all() { return profiles.findAll().stream().map(ProviderDto::from).toList(); }
