@@ -1,33 +1,45 @@
-# Weekly pull requests for outdated dependencies; each one runs through CI before it can be merged
+# Weekly dependency updates as a few grouped pull requests; each one runs through CI before merging.
+# Major upgrades of runtimes (Java, Node) are skipped here: they're done deliberately, in the
+# Dockerfiles, CI and pom.xml together, so every environment stays on the same version.
 version: 2
 updates:
   - package-ecosystem: maven
     directory: /backend
     schedule:
       interval: weekly
+    open-pull-requests-limit: 3
     groups:
-      minor-and-patch:
+      backend:
         update-types: [minor, patch]
 
   - package-ecosystem: npm
     directory: /frontend
     schedule:
       interval: weekly
+    open-pull-requests-limit: 3
     groups:
-      minor-and-patch:
+      frontend:
         update-types: [minor, patch]
+    ignore:
+      # Follows the Node version used by the project
+      - dependency-name: "@types/node"
+        update-types: [version-update:semver-major]
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
 
   - package-ecosystem: docker
-    directory: /backend
+    directories: [/backend, /frontend]
     schedule:
       interval: weekly
-
-  - package-ecosystem: docker
-    directory: /frontend
-    schedule:
-      interval: weekly
+    groups:
+      base-images:
+        patterns: ["*"]
+    ignore:
+      - dependency-name: "*"
+        update-types: [version-update:semver-major]
