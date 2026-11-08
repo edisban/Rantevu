@@ -20,7 +20,7 @@ https://github.com/user-attachments/assets/b31659f9-2281-4b66-8000-8ed8bcc5d8fb
 | --- | --- |
 | Frontend | React 19, TypeScript, Vite, Material UI, STOMP.js |
 | Backend | Spring Boot 4 (Java 17), Spring Security, Spring Data JPA, Spring WebSocket |
-| Database | PostgreSQL 16, Flyway |
+| Data | PostgreSQL 16 with Flyway; Redis for login rate limiting |
 | Infrastructure | Docker Compose, nginx |
 | Quality | JUnit + Testcontainers, Vitest, Playwright, GitHub Actions, Dependabot |
 
@@ -57,24 +57,16 @@ flowchart LR
     B <-->|"WebSocket /ws"| N
     N --> S["Spring Boot<br/>REST · security · STOMP"]
     S --> D[("PostgreSQL")]
+    S --> R[("Redis")]
 ```
 
 nginx serves the React build and proxies `/api` and `/ws` to Spring Boot, so the browser uses a single origin and CORS stays off. The backend is organised by feature (`auth`, `appointment`, `message`, `provider`, `user`, `security`), and responses use DTOs, never JPA entities.
-
-## Design decisions
-
-- **Stateless auth in an HttpOnly cookie.** The JWT can't be read by JavaScript, so an XSS bug can't steal it; CSRF tokens protect every state-changing request.
-- **Argon2id password hashing.** Legacy BCrypt hashes still verify and are upgraded transparently at the next login.
-- **Double booking enforced by the database.** An application check alone has a race condition, so a partial unique index on (professional, time) for active bookings is the real guarantee; conflicts return `409`.
-- **Write over REST, push over WebSocket.** Messages and booking changes go through the REST API (validation, permissions, CSRF), and STOMP only delivers updates to each user's private queues.
-- **Schema as code.** Flyway owns versioned migrations; Hibernate only validates the schema.
-- **Single instance by design.** The STOMP broker and the login rate limiter are in memory; scaling out would move them to RabbitMQ and Redis.
 
 ## Security
 
 - JWT in an `HttpOnly`, `SameSite` cookie, with CSRF protection
 - Argon2id hashing and a minimum password policy
-- Login rate limiting per username and per IP; no user enumeration
+- Login rate limiting per username and per IP, stored in Redis; no user enumeration
 - Role and ownership checks on every action, validated input, consistent JSON errors
 - Content-Security-Policy and standard security headers
 - WebSocket limited to authenticated users, same origin and their own queues
@@ -84,7 +76,7 @@ nginx serves the React build and proxies `/api` and `/ws` to Spring Boot, so the
 
 | Suite | Scope | Command |
 | --- | --- | --- |
-| Backend integration | Full app against real PostgreSQL via Testcontainers | `cd backend && ./mvnw verify` |
+| Backend integration | Full app against real PostgreSQL and Redis via Testcontainers | `cd backend && ./mvnw verify` |
 | Frontend unit | Search and filtering logic (Vitest) | `cd frontend && npm test` |
 | End-to-end | Two real browsers: sign up, book, live status, chat, account deletion (Playwright) | `cd frontend && npm run e2e` |
 
