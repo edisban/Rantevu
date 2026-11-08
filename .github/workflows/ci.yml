@@ -1,4 +1,5 @@
-# CI: every push and pull request builds and tests both apps and checks that the Docker images build.
+# CI: every push and pull request builds and tests both apps, runs browser tests against the whole
+# app in Docker, and checks that the Docker images build.
 # CD: every push to main also publishes the images to GitHub Container Registry (ghcr.io).
 name: CI/CD
 
@@ -60,9 +61,50 @@ jobs:
       # Type-checks with tsc, then bundles with Vite
       - run: npm run build
 
+  e2e:
+    name: End-to-end · Playwright
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start the whole app (database, backend, frontend)
+        run: docker compose up --build -d
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install dependencies and the Chromium browser
+        working-directory: frontend
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Wait until the app answers
+        run: |
+          for i in $(seq 1 60); do
+            curl -sf -o /dev/null http://localhost:5173/api/auth/csrf && exit 0
+            sleep 3
+          done
+          docker compose logs backend
+          exit 1
+      - name: Run the browser tests
+        working-directory: frontend
+        run: npx playwright test
+      - name: Upload the Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            frontend/playwright-report
+            frontend/test-results
+      - name: Show backend logs on failure
+        if: failure()
+        run: docker compose logs backend
+
   images:
     name: Docker image · ${{ matrix.app }}
-    needs: [backend, frontend]
+    needs: [backend, frontend, e2e]
     runs-on: ubuntu-latest
     permissions:
       contents: read
