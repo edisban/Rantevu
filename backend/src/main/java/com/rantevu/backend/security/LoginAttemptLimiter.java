@@ -1,30 +1,34 @@
 package com.rantevu.backend.security;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataAccessException;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
 import java.time.Duration;
-import java.time.Instant;
-import java.util.Deque;
 import java.util.Locale;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedDeque;
 
 /**
- * Slows down password guessing. Failed logins are counted over a 15-minute window:
+ * Slows down password guessing. Failed logins are counted in Redis for 15 minutes:
  * 5 for one username stops guessing one account; 30 from one IP address stops trying
  * many accounts from one place, while people sharing an office or campus IP aren't
  * locked out by each other's typos. Over a limit, attempts are refused with 429.
- * In-memory, so it is per backend instance and resets on restart.
+ *
+ * Each counter is a Redis key: INCR on every failure, and EXPIRE on the first one, so
+ * the count disappears 15 minutes after the first failure. Because the counts live in
+ * Redis, they survive backend restarts and are shared by every backend instance.
  */
 @Component
 public class LoginAttemptLimiter {
     static final int MAX_PER_USERNAME = 5;
     static final int MAX_PER_IP = 30;
     static final Duration WINDOW = Duration.ofMinutes(15);
+    private static final Logger log = LoggerFactory.getLogger(LoginAttemptLimiter.class);
 
-    private final Map<String, Deque<Instant>> failures = new ConcurrentHashMap<>();
+    private final StringRedisTemplate redis;
+    public LoginAttemptLimiter(StringRedisTemplate redis) { this.redis = redis; }
 
     public void checkAllowed(String username, String ip) {
         if (count(userKey(username)) >= MAX_PER_USERNAME || count(ipKey(ip)) >= MAX_PER_IP)
@@ -32,25 +36,36 @@ public class LoginAttemptLimiter {
     }
 
     public void recordFailure(String username, String ip) {
-        Instant now = Instant.now();
-        for (String key : new String[] { userKey(username), ipKey(ip) })
-            failures.computeIfAbsent(key, k -> new ConcurrentLinkedDeque<>()).addLast(now);
+        for (String key : new String[] { userKey(username), ipKey(ip) }) {
+            try {
+                Long failures = redis.opsForValue().increment(key);
+                if (failures != null && failures == 1) redis.expire(key, WINDOW);
+            } catch (DataAccessException e) {
+                log.warn("Login limiter: Redis unavailable, failure not counted", e);
+            }
+        }
     }
 
-    // A successful login clears that username's count; the IP count only ages out
+    // A successful login clears that username's count; the IP count only expires
     public void recordSuccess(String username) {
-        failures.remove(userKey(username));
+        try {
+            redis.delete(userKey(username));
+        } catch (DataAccessException e) {
+            log.warn("Login limiter: Redis unavailable, count not cleared", e);
+        }
     }
 
-    private int count(String key) {
-        Deque<Instant> recent = failures.get(key);
-        if (recent == null) return 0;
-        Instant cutoff = Instant.now().minus(WINDOW);
-        while (!recent.isEmpty() && recent.peekFirst().isBefore(cutoff)) recent.pollFirst();
-        if (recent.isEmpty()) failures.remove(key);
-        return recent.size();
+    // If Redis is down, logins keep working (fail open) rather than locking everyone out
+    private long count(String key) {
+        try {
+            String value = redis.opsForValue().get(key);
+            return value == null ? 0 : Long.parseLong(value);
+        } catch (DataAccessException e) {
+            log.warn("Login limiter: Redis unavailable, limit not enforced", e);
+            return 0;
+        }
     }
 
-    private static String userKey(String username) { return "user:" + username.trim().toLowerCase(Locale.ROOT); }
-    private static String ipKey(String ip) { return "ip:" + ip; }
+    static String userKey(String username) { return "login-failures:user:" + username.trim().toLowerCase(Locale.ROOT); }
+    static String ipKey(String ip) { return "login-failures:ip:" + ip; }
 }

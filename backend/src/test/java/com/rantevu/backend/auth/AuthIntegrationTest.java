@@ -4,6 +4,7 @@ import com.rantevu.backend.IntegrationTest;
 import com.rantevu.backend.security.AuthCookies;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.http.HttpHeaders;
@@ -20,6 +21,9 @@ class AuthIntegrationTest extends IntegrationTest {
 
     @Autowired
     JdbcTemplate jdbc;
+
+    @Autowired
+    StringRedisTemplate redis;
 
     private String storedHash(Long userId) {
         return jdbc.queryForObject("select password_hash from users where id = ?", String.class, userId);
@@ -102,6 +106,19 @@ class AuthIntegrationTest extends IntegrationTest {
         mvc.perform(post("/api/auth/login").with(xsrf()).contentType(MediaType.APPLICATION_JSON)
                 .content("{\"username\":\"%s\",\"password\":\"%s\"}".formatted(victim.username(), PASSWORD)))
             .andExpect(status().isTooManyRequests());
+    }
+
+    @Test
+    void failedLoginsAreCountedInRedisAndExpire() throws Exception {
+        var user = client();
+        mvc.perform(post("/api/auth/login").with(xsrf()).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"%s\",\"password\":\"wrong-pass-1\"}".formatted(user.username())))
+            .andExpect(status().isBadRequest());
+
+        String key = "login-failures:user:" + user.username().toLowerCase();
+        assertThat(redis.opsForValue().get(key)).isEqualTo("1");
+        // The counter removes itself after the 15-minute window
+        assertThat(redis.getExpire(key)).isBetween(1L, 15L * 60);
     }
 
     @Test
