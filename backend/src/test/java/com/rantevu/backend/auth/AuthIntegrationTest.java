@@ -71,6 +71,25 @@ class AuthIntegrationTest extends IntegrationTest {
     }
 
     @Test
+    void signInIgnoresCaseAndSpacesInTheUsername() throws Exception {
+        String username = unique("Case");
+        mvc.perform(post("/api/auth/register/client").with(xsrf())
+                .contentType(MediaType.APPLICATION_JSON).content(registerBody(username.toUpperCase(), PASSWORD)))
+            .andExpect(status().isOk());
+        // Stored lower-case
+        assertThat(jdbc.queryForObject("select username from users where username = ?", String.class, username.toLowerCase()))
+            .isEqualTo(username.toLowerCase());
+        mvc.perform(post("/api/auth/login").with(xsrf()).contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\" %s \",\"password\":\"%s\"}".formatted(username, PASSWORD)))
+            .andExpect(status().isOk());
+        // The same name in another case is the same account, not a new one
+        mvc.perform(post("/api/auth/register/client").with(xsrf())
+                .contentType(MediaType.APPLICATION_JSON).content(registerBody(username.toLowerCase(), PASSWORD)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message").value("Username already taken"));
+    }
+
+    @Test
     void usernameMustBeUnique() throws Exception {
         var existing = client();
         mvc.perform(post("/api/auth/register/client").with(xsrf())

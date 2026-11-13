@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -40,15 +41,17 @@ public class AuthService {
     }
 
     public Session login(LoginRequest r, String clientIp) {
-        limiter.checkAllowed(r.username(), clientIp);
-        var user = users.findByUsername(r.username().trim())
+        // "Edis", "edis" and "edis " are the same account, and share one failed-attempt counter
+        String username = normalize(r.username());
+        limiter.checkAllowed(username, clientIp);
+        var user = users.findByUsername(username)
             .filter(u -> encoder.matches(r.password(), u.getPassword()));
         if (user.isEmpty()) {
-            limiter.recordFailure(r.username(), clientIp);
+            limiter.recordFailure(username, clientIp);
             // Same message for unknown user and wrong password, so usernames can't be discovered
             throw new IllegalArgumentException("Bad credentials");
         }
-        limiter.recordSuccess(r.username());
+        limiter.recordSuccess(username);
         // Older accounts still have a BCrypt hash: re-hash with Argon2id now that we know the password
         var u = user.get();
         if (encoder.upgradeEncoding(u.getPassword())) {
@@ -59,11 +62,14 @@ public class AuthService {
     }
 
     private User createUser(String username, String email, String password, String fullName, Role role) {
-        // Field rules are enforced by Bean Validation on the request records
-        if (users.existsByUsername(username.trim())) throw new IllegalArgumentException("Username already taken");
-        if (users.existsByEmail(email.trim())) throw new IllegalArgumentException("Email already in use");
+        // Field rules are enforced by Bean Validation on the request records.
+        // Usernames and emails are stored lower-case, so case can't create a second account.
+        username = normalize(username);
+        email = normalize(email);
+        if (users.existsByUsername(username)) throw new IllegalArgumentException("Username already taken");
+        if (users.existsByEmail(email)) throw new IllegalArgumentException("Email already in use");
         var u = new User();
-        u.setUsername(username.trim()); u.setEmail(email.trim()); u.setPassword(encoder.encode(password)); u.setFullName(fullName.trim()); u.setRole(role);
+        u.setUsername(username); u.setEmail(email); u.setPassword(encoder.encode(password)); u.setFullName(fullName.trim()); u.setRole(role);
         return users.save(u);
     }
 
@@ -71,6 +77,8 @@ public class AuthService {
         return new Session(jwt.generate(u.getId(), u.getRole().name()), new AuthResponse(u.getRole().name(), u.getId(), u.getFullName()));
     }
 
+    // Locale.ROOT: the same result on every server, whatever its language settings
+    private static String normalize(String s) { return s.trim().toLowerCase(Locale.ROOT); }
     private static boolean isBlank(String s) { return s == null || s.isBlank(); }
     private static String blankToNull(String s) { return isBlank(s) ? null : s.trim(); }
 }

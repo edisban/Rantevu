@@ -164,7 +164,9 @@ function AuthCard({ onDone, suggestions }: { onDone: (role: string) => void; sug
           </Box>
         )}
 
-        <TextField label={t('username')} required value={form.username || ''} onChange={e => set('username', e.target.value)} autoComplete="username" slotProps={{ input: icon(<PersonRoundedIcon />) }} />
+        <TextField label={t('username')} required value={form.username || ''} onChange={e => set('username', e.target.value)} autoComplete="username"
+          // Phones would otherwise capitalise the first letter; sign-in ignores case anyway
+          slotProps={{ input: icon(<PersonRoundedIcon />), htmlInput: { autoCapitalize: 'none', autoCorrect: 'off', spellCheck: false } }} />
         {tab === 1 && (
           <>
             <TextField label={t('fullName')} required value={form.fullName || ''} onChange={e => set('fullName', e.target.value)} autoComplete="name" slotProps={{ input: icon(<BadgeRoundedIcon />) }} />
