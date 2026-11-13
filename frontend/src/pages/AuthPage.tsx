@@ -16,7 +16,14 @@ import BoltRoundedIcon from '@mui/icons-material/BoltRounded'
 import NotificationsActiveRoundedIcon from '@mui/icons-material/NotificationsActiveRounded'
 import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded'
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded'
-import { delay } from '../style'
+import { categoryChipSx, delay } from '../style'
+import RotatingWord from '../components/RotatingWord'
+
+// The professions the headline cycles through
+const HERO_WORDS = {
+  el: ['γιατρό', 'οδοντίατρο', 'φυσικοθεραπευτή', 'ψυχολόγο', 'δικηγόρο'],
+  en: ['doctor', 'dentist', 'physio', 'therapist', 'lawyer'],
+}
 
 const dashboardFor = (role: string) => (role === 'ROLE_PROVIDER' ? '/provider/dashboard' : '/client/dashboard')
 
@@ -40,7 +47,8 @@ export default function AuthPage() {
           <Chip className="reveal" icon={<AutoAwesomeRoundedIcon />} label={t('heroBadge')} color="primary" variant="outlined"
             sx={theme => ({ mb: 3, backgroundColor: alpha(theme.palette.primary.main, 0.08), backdropFilter: 'blur(10px)' })} />
           <Typography className="reveal" style={delay(0.08)} variant="h2" component="h1" sx={{ fontSize: { xs: 38, sm: 48, md: 58 }, lineHeight: 1.05, mb: 2.5 }}>
-            {t('heroTitle1')} <span className="gradient-text">{t('heroTitle2')}</span>
+            {t('heroTitle')}<br />
+            <RotatingWord words={HERO_WORDS[lang]} className="gradient-text" />
           </Typography>
           <Typography className="reveal" style={delay(0.16)} color="text.secondary" sx={{ fontSize: { xs: 16, md: 18 }, maxWidth: 560, mb: 4 }}>
             {t('heroSub')}
@@ -50,8 +58,8 @@ export default function AuthPage() {
             {CATEGORIES.map(c => {
               const Icon = c.icon
               return (
-                <Chip key={c.key} icon={<Icon style={{ color: c.color }} />} label={c[lang]} variant="outlined"
-                  sx={theme => ({ py: 2.25, px: 0.5, borderColor: theme.palette.divider, backgroundColor: alpha(theme.palette.background.paper, 0.5), backdropFilter: 'blur(10px)' })} />
+                <Chip key={c.key} icon={<Icon />} label={c[lang]} variant="outlined"
+                  sx={[theme => ({ py: 2.25, px: 0.5, borderColor: theme.palette.divider, backgroundColor: alpha(theme.palette.background.paper, 0.5), backdropFilter: 'blur(10px)' }), categoryChipSx(c.color)]} />
               )
             })}
           </Box>

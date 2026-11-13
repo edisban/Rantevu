@@ -17,7 +17,7 @@ import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded'
 import EventAvailableRoundedIcon from '@mui/icons-material/EventAvailableRounded'
 import PersonSearchRoundedIcon from '@mui/icons-material/PersonSearchRounded'
 import AppsRoundedIcon from '@mui/icons-material/AppsRounded'
-import { delay } from '../style'
+import { categoryChipSx, delay } from '../style'
 
 export default function ClientDashboard() {
   const { t, lang, locale } = useLang()
@@ -81,13 +81,13 @@ export default function ClientDashboard() {
             <TextField fullWidth placeholder={t('searchPh')} value={q} onChange={e => setQ(e.target.value)}
               slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchRoundedIcon /></InputAdornment> } }} />
             <Box sx={{ display: 'flex', gap: 1, mt: 2, overflowX: 'auto', pb: 0.5, scrollbarWidth: 'thin' }}>
-              <Chip icon={<AppsRoundedIcon />} label={t('all')} clickable onClick={() => setCat(null)} color={cat === null ? 'primary' : 'default'} variant={cat === null ? 'filled' : 'outlined'} />
+              <Chip icon={<AppsRoundedIcon />} label={t('all')} clickable onClick={() => setCat(null)} variant="outlined" sx={categoryChipSx('var(--brand-c)', cat === null)} />
               {CATEGORIES.map(c => {
                 const Icon = c.icon
                 const active = cat === c.key
                 return (
-                  <Chip key={c.key} icon={<Icon style={{ color: active ? '#fff' : c.color }} />} label={c[lang]} clickable onClick={() => setCat(active ? null : c.key)}
-                    variant={active ? 'filled' : 'outlined'} sx={active ? { backgroundColor: c.color, color: '#fff', '&:hover': { backgroundColor: c.color } } : undefined} />
+                  <Chip key={c.key} icon={<Icon />} label={c[lang]} clickable onClick={() => setCat(active ? null : c.key)}
+                    variant="outlined" sx={categoryChipSx(c.color, active)} />
                 )
               })}
             </Box>
@@ -107,7 +107,7 @@ export default function ClientDashboard() {
             {filtered.map((p, i) => {
               const c = categoryOf(p.specialty)
               return (
-                <Paper key={p.userId} className="reveal lift" style={delay(0.1 + Math.min(i, 8) * 0.05)}
+                <Paper key={p.userId} className="reveal provider-card" style={delay(0.1 + Math.min(i, 8) * 0.05)}
                   sx={{ p: 2.5, display: 'flex', flexDirection: 'column', gap: 1.5, borderRadius: 5 }}>
                   <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
                     <PersonAvatar name={p.fullName} specialty={p.specialty} size={52} />

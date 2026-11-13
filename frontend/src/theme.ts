@@ -86,8 +86,17 @@ export function buildTheme(mode: 'light' | 'dark') {
               background: 'var(--brand-gradient)',
               color: '#fff',
               boxShadow: '0 10px 24px -10px var(--brand-glow)',
+              overflow: 'hidden',
+              // A streak of light sweeps across on hover
+              '&::after': {
+                content: '""', position: 'absolute', top: 0, left: '-60%', width: '40%', height: '100%', pointerEvents: 'none',
+                background: 'linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.42), transparent)',
+                transform: 'skewX(-20deg)', transition: 'left 0.7s ease',
+              },
               '&:hover': { filter: 'brightness(1.12)', boxShadow: '0 14px 30px -10px var(--brand-glow)' },
+              '&:hover::after': { left: '130%' },
               '&.Mui-disabled': { opacity: 0.5, color: '#fff' },
+              '&.Mui-disabled::after': { display: 'none' },
             },
           },
           outlined: { borderColor: border, backgroundColor: dark ? 'rgba(52, 20, 30, 0.45)' : 'rgba(255, 250, 246, 0.6)', backdropFilter: blur },

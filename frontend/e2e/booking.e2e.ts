@@ -35,9 +35,10 @@ async function deleteAccount(page: Page) {
   await expect(page.getByText('Your account was deleted')).toBeVisible()
 }
 
+/** Tomorrow as the day slider names it, e.g. "Saturday 14 November" (the English UI uses en-GB). */
 function tomorrow() {
   const d = new Date(Date.now() + 24 * 60 * 60 * 1000)
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  return d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
 }
 
 test('a client books, the professional accepts live, and they chat', async ({ browser }) => {
@@ -53,7 +54,7 @@ test('a client books, the professional accepts live, and they chat', async ({ br
   const card = client.locator('.MuiPaper-root', { hasText: proName })
   await card.getByRole('button', { name: 'Book' }).click()
   const dialog = client.getByRole('dialog')
-  await dialog.locator('input[type=date]').fill(tomorrow())
+  await dialog.getByRole('button', { name: tomorrow() }).click()
   await dialog.getByRole('button', { name: '10:00', exact: true }).click()
   await dialog.getByRole('button', { name: 'Send request' }).click()
   await expect(client.getByText('Request sent!')).toBeVisible()

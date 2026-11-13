@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useCallback, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { Box, Button, ButtonBase, Container, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Tooltip } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import ChatRoundedIcon from '@mui/icons-material/ChatRounded'
@@ -15,11 +15,12 @@ import SpaceDashboardRoundedIcon from '@mui/icons-material/SpaceDashboardRounded
 import AccountCircleRoundedIcon from '@mui/icons-material/AccountCircleRounded'
 
 // A text link in the header: the label on wider screens, just the icon on phones
-function NavItem({ to, onClick, label, icon, active, count = 0 }:
-  { to?: string; onClick?: () => void; label: string; icon: ReactNode; active?: boolean; count?: number }) {
+function NavItem({ to, onClick, onHover, label, icon, active, count = 0 }:
+  { to?: string; onClick?: () => void; onHover: (el: HTMLElement) => void; label: string; icon: ReactNode; active?: boolean; count?: number }) {
   const linkProps = to ? { component: Link, to } : { onClick }
   return (
-    <ButtonBase {...linkProps} aria-label={count > 0 ? `${label} (${count})` : label} aria-current={active ? 'page' : undefined}
+    <ButtonBase {...linkProps} onMouseEnter={e => onHover(e.currentTarget)} onFocus={e => onHover(e.currentTarget)}
+      aria-label={count > 0 ? `${label} (${count})` : label} aria-current={active ? 'page' : undefined}
       sx={{
         gap: 0.75, px: { xs: 1, sm: 0.25 }, minHeight: 44, borderRadius: 2, fontSize: 14, fontFamily: 'inherit',
         fontWeight: active ? 700 : 500, color: active ? 'text.primary' : 'text.secondary',
@@ -38,7 +39,7 @@ function NavItem({ to, onClick, label, icon, active, count = 0 }:
 }
 
 export default function Navbar() {
-  const { t, toggle: toggleLang } = useLang()
+  const { t, lang, toggle: toggleLang } = useLang()
   const { mode, toggle: toggleTheme } = useThemeMode()
   const { unread } = useChat()
   const nav = useNavigate()
@@ -48,6 +49,16 @@ export default function Navbar() {
   const role = localStorage.getItem('role')
   const dashboard = role === 'ROLE_PROVIDER' ? '/provider/dashboard' : '/client/dashboard'
   const logout = async () => { await signOut(); setConfirm(false); nav('/') }
+
+  // The underline sits under the current page and slides to whichever item the pointer is on
+  const menu = useRef<HTMLElement>(null)
+  const [line, setLine] = useState<{ left: number; width: number } | null>(null)
+  const moveLine = useCallback((el: HTMLElement | null | undefined) => {
+    setLine(el ? { left: el.offsetLeft, width: el.offsetWidth } : null)
+  }, [])
+  const backToCurrent = useCallback(() => moveLine(menu.current?.querySelector<HTMLElement>('[aria-current="page"]')), [moveLine])
+  // Labels change width with the language, so measure again after it switches
+  useLayoutEffect(backToCurrent, [backToCurrent, pathname, lang, loggedIn, unread])
 
   return (
     <Box component="header" sx={theme => ({
@@ -61,11 +72,18 @@ export default function Navbar() {
         <Box component={Link} to={loggedIn ? dashboard : '/'} aria-label="Rantevu" sx={{ textDecoration: 'none', mr: 'auto', display: 'flex' }}><Logo /></Box>
 
         {loggedIn && (
-          <Box component="nav" sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0, sm: 3.5 }, mr: { xs: 0.5, sm: 2 } }}>
-            <NavItem to={dashboard} label={t('dashboard')} icon={<SpaceDashboardRoundedIcon />} active={pathname === dashboard} />
-            <NavItem to="/messages" label={t('messages')} icon={<ChatRoundedIcon />} active={pathname === '/messages'} count={unread} />
-            <NavItem to="/profile" label={t('profile')} icon={<AccountCircleRoundedIcon />} active={pathname === '/profile'} />
-            <NavItem onClick={() => setConfirm(true)} label={t('logout')} icon={<LogoutRoundedIcon />} />
+          <Box component="nav" ref={menu} onMouseLeave={backToCurrent} onBlur={backToCurrent}
+            sx={{ position: 'relative', display: 'flex', alignItems: 'center', gap: { xs: 0, sm: 3.5 }, mr: { xs: 0.5, sm: 2 } }}>
+            <NavItem to={dashboard} onHover={moveLine} label={t('dashboard')} icon={<SpaceDashboardRoundedIcon />} active={pathname === dashboard} />
+            <NavItem to="/messages" onHover={moveLine} label={t('messages')} icon={<ChatRoundedIcon />} active={pathname === '/messages'} count={unread} />
+            <NavItem to="/profile" onHover={moveLine} label={t('profile')} icon={<AccountCircleRoundedIcon />} active={pathname === '/profile'} />
+            <NavItem onClick={() => setConfirm(true)} onHover={moveLine} label={t('logout')} icon={<LogoutRoundedIcon />} />
+            {/* Sits on the header's bottom border: (72px header - 44px items) / 2 below the menu */}
+            <Box aria-hidden sx={{
+              position: 'absolute', left: 0, bottom: -14, height: 3, borderRadius: 3, background: 'var(--brand-gradient)',
+              width: line?.width ?? 0, transform: `translateX(${line?.left ?? 0}px)`, opacity: line ? 1 : 0,
+              transition: 'transform .35s cubic-bezier(.3, 1.3, .5, 1), width .35s cubic-bezier(.3, 1.3, .5, 1), opacity .2s ease',
+            }} />
           </Box>
         )}
 
