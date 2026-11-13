@@ -7,21 +7,54 @@ export const BRAND = {
   burgundyLight: '#f5c2cd',
   sand: '#8a5a30',
   sandLight: '#f3d9bd',
-  bgLight: '#f4e4d8',
+  bgLight: '#f4e0d4',
   bgDark: '#1c0b10',
 }
 
 // The serif used for the wordmark
 export const SERIF = '"Fraunces", Georgia, serif'
 
+// Liquid glass, as opposed to frosted glass: only a little blur and boosted color, so the colorful
+// backdrop stays visible through it; a bright rim that is strongest at the corners and a soft glare
+// across the top give it the volume of a drop of glass.
+export function liquidGlass(dark: boolean, strong = false) {
+  const fill = dark
+    ? strong ? 'linear-gradient(180deg, rgba(52, 20, 30, 0.94), rgba(40, 15, 23, 0.94))' : 'linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.04))'
+    : strong ? 'linear-gradient(180deg, rgba(255, 250, 246, 0.94), rgba(255, 246, 240, 0.9))' : 'linear-gradient(180deg, rgba(255, 255, 255, 0.46), rgba(255, 255, 255, 0.22))'
+  const lens = dark ? 'blur(10px) saturate(170%)' : 'blur(8px) saturate(190%) brightness(1.05)'
+  return {
+    position: 'relative',
+    isolation: 'isolate',
+    backgroundColor: 'transparent',
+    backgroundImage: fill,
+    backdropFilter: lens,
+    WebkitBackdropFilter: lens,
+    border: '1px solid transparent',
+    boxShadow: dark
+      ? 'inset 0 1px 1px rgba(255, 255, 255, 0.22), inset 0 -1px 1px rgba(255, 255, 255, 0.06), 0 16px 36px -16px rgba(0, 0, 0, 0.7)'
+      : 'inset 0 1px 1px rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.3), 0 14px 34px -16px rgba(70, 8, 26, 0.45)',
+    // The rim: a gradient ring drawn by masking out everything but a 1.4px edge
+    '&::before': {
+      content: '""', position: 'absolute', inset: 0, borderRadius: 'inherit', padding: '1.4px', pointerEvents: 'none', zIndex: -1,
+      background: dark
+        ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.04) 32%, rgba(255, 255, 255, 0) 55%, rgba(255, 255, 255, 0.3))'
+        : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.1) 32%, rgba(255, 255, 255, 0) 55%, rgba(255, 255, 255, 0.75))',
+      WebkitMask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
+      WebkitMaskComposite: 'xor',
+      mask: 'linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0)',
+    },
+    // The glare across the top
+    '&::after': {
+      content: '""', position: 'absolute', left: '6%', right: '6%', top: 1, height: '40%', borderRadius: 'inherit', pointerEvents: 'none', zIndex: -1,
+      background: `linear-gradient(180deg, rgba(255, 255, 255, ${dark ? 0.07 : 0.3}), rgba(255, 255, 255, 0))`,
+    },
+  } as const
+}
+
 export function buildTheme(mode: 'light' | 'dark') {
   const dark = mode === 'dark'
-  // Quiet glass: mostly opaque panels with a light blur, so text stays crisp over the colored backdrop
-  const glass = dark ? 'rgba(52, 20, 30, 0.62)' : 'rgba(255, 250, 246, 0.78)'
-  const glassStrong = dark ? 'rgba(40, 15, 23, 0.96)' : 'rgba(255, 250, 246, 0.96)'
-  const border = dark ? 'rgba(245, 194, 205, 0.14)' : 'rgba(255, 255, 255, 0.92)'
-  const shadow = dark ? '0 12px 34px -18px rgba(0, 0, 0, 0.75)' : '0 10px 30px -18px rgba(92, 13, 32, 0.5)'
-  const blur = 'blur(14px) saturate(140%)'
+  const glass = liquidGlass(dark)
+  const glassStrong = liquidGlass(dark, true)
 
   return createTheme({
     palette: {
@@ -33,9 +66,10 @@ export function buildTheme(mode: 'light' | 'dark') {
       success: { main: dark ? '#86efac' : '#15803d' },
       warning: { main: dark ? '#fcd34d' : '#b45309' },
       error: { main: dark ? '#fca5a5' : '#c81e1e' },
-      background: { default: dark ? BRAND.bgDark : BRAND.bgLight, paper: glass },
-      text: dark ? { primary: '#f6ece8', secondary: '#cdb8b3' } : { primary: '#24151a', secondary: '#5e4a45' },
-      divider: dark ? 'rgba(245, 194, 205, 0.14)' : 'rgba(92, 13, 32, 0.14)',
+      background: { default: dark ? BRAND.bgDark : BRAND.bgLight, paper: dark ? '#2a1119' : '#fbf1ec' },
+      // Slightly deeper secondary text than before: the glass lets more color through
+      text: dark ? { primary: '#f6ece8', secondary: '#d4c0bb' } : { primary: '#24101a', secondary: '#4d2a33' },
+      divider: dark ? 'rgba(245, 194, 205, 0.16)' : 'rgba(92, 13, 32, 0.14)',
     },
     shape: { borderRadius: 4 }, // sx radius units are 4px
     typography: {
@@ -50,9 +84,8 @@ export function buildTheme(mode: 'light' | 'dark') {
     },
     components: {
       MuiPaper: {
-        styleOverrides: {
-          root: { borderRadius: 14, backgroundImage: 'none', backgroundColor: glass, backdropFilter: blur, WebkitBackdropFilter: blur, border: `1px solid ${border}`, boxShadow: shadow },
-        },
+        defaultProps: { elevation: 0 },
+        styleOverrides: { root: { borderRadius: 24, ...glass } },
       },
       // Pages fill the window up to 1536px (MUI's xl), so huge screens don't stretch content too far;
       // side padding grows with the screen so content never touches the edges
@@ -65,27 +98,30 @@ export function buildTheme(mode: 'light' | 'dark') {
           }),
         },
       },
-      MuiCard: { defaultProps: { elevation: 0 }, styleOverrides: { root: { borderRadius: 16 } } },
-      MuiDialog: { styleOverrides: { paper: { backgroundColor: glassStrong, borderRadius: 18 } } },
-      MuiMenu: { styleOverrides: { paper: { backgroundColor: glassStrong } } },
-      MuiAutocomplete: { styleOverrides: { paper: { backgroundColor: glassStrong } } },
+      MuiCard: { defaultProps: { elevation: 0 }, styleOverrides: { root: { borderRadius: 24 } } },
+      // Overlays sit on busy content, so they use the denser glass to stay readable
+      MuiDialog: { styleOverrides: { paper: { ...glassStrong, borderRadius: 28 } } },
+      MuiMenu: { styleOverrides: { paper: glassStrong } },
+      MuiAutocomplete: { styleOverrides: { paper: glassStrong } },
       MuiBackdrop: {
         styleOverrides: {
-          root: { '&:not(.MuiBackdrop-invisible)': { backgroundColor: 'rgba(28, 11, 16, 0.5)', backdropFilter: 'blur(6px)' } },
+          root: { '&:not(.MuiBackdrop-invisible)': { backgroundColor: 'rgba(28, 11, 16, 0.45)', backdropFilter: 'blur(4px)' } },
         },
       },
       MuiButton: {
         defaultProps: { disableElevation: true },
         styleOverrides: {
           root: {
-            borderRadius: 10,
-            paddingInline: 18,
+            // Capsules, as liquid glass controls are
+            borderRadius: 999,
+            paddingInline: 20,
             transition: 'transform .15s ease, filter .2s ease, box-shadow .2s ease',
             '&:active': { transform: 'scale(0.98)' },
             '&.MuiButton-contained.MuiButton-colorPrimary': {
               background: 'var(--brand-gradient)',
               color: '#fff',
-              boxShadow: '0 10px 24px -10px var(--brand-glow)',
+              // Tinted glass: a highlight along the top edge on top of the burgundy
+              boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.6), inset 0 -1px 1px rgba(0, 0, 0, 0.15), 0 10px 24px -10px var(--brand-glow)',
               overflow: 'hidden',
               // A streak of light sweeps across on hover
               '&::after': {
@@ -93,27 +129,34 @@ export function buildTheme(mode: 'light' | 'dark') {
                 background: 'linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.42), transparent)',
                 transform: 'skewX(-20deg)', transition: 'left 0.7s ease',
               },
-              '&:hover': { filter: 'brightness(1.12)', boxShadow: '0 14px 30px -10px var(--brand-glow)' },
+              '&:hover': { filter: 'brightness(1.12)', boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.6), inset 0 -1px 1px rgba(0, 0, 0, 0.15), 0 14px 30px -10px var(--brand-glow)' },
               '&:hover::after': { left: '130%' },
               '&.Mui-disabled': { opacity: 0.5, color: '#fff' },
               '&.Mui-disabled::after': { display: 'none' },
             },
           },
-          outlined: { borderColor: border, backgroundColor: dark ? 'rgba(52, 20, 30, 0.45)' : 'rgba(255, 250, 246, 0.6)', backdropFilter: blur },
+          outlined: glass,
         },
       },
       MuiOutlinedInput: {
         styleOverrides: {
           root: {
-            borderRadius: 12,
-            backgroundColor: dark ? 'rgba(28, 11, 16, 0.45)' : 'rgba(255, 255, 255, 0.78)',
-            '& .MuiOutlinedInput-notchedOutline': { borderColor: dark ? 'rgba(245, 194, 205, 0.2)' : 'rgba(92, 13, 32, 0.16)' },
+            borderRadius: 18,
+            backgroundColor: dark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.55)',
+            boxShadow: dark ? 'inset 0 1px 2px rgba(0, 0, 0, 0.35)' : 'inset 0 1px 2px rgba(70, 8, 26, 0.1)',
+            backdropFilter: 'blur(8px) saturate(160%)',
+            '& .MuiOutlinedInput-notchedOutline': { borderColor: dark ? 'rgba(245, 194, 205, 0.2)' : 'rgba(255, 255, 255, 0.9)' },
           },
         },
       },
-      MuiChip: { styleOverrides: { root: { fontWeight: 600, borderRadius: 8 } } },
+      MuiChip: { styleOverrides: { root: { fontWeight: 600, borderRadius: 999 } } },
       MuiTab: { styleOverrides: { root: { textTransform: 'none', fontWeight: 600, minHeight: 44 } } },
-      MuiAlert: { styleOverrides: { root: { borderRadius: 12, backdropFilter: blur } } },
+      // Alerts keep their own solid colors rather than the glass every other Paper gets
+      MuiAlert: {
+        styleOverrides: {
+          root: { borderRadius: 18, backgroundImage: 'none', backdropFilter: 'none', '&::before, &::after': { display: 'none' } },
+        },
+      },
     },
   })
 }

@@ -13,7 +13,8 @@ https://github.com/user-attachments/assets/b31659f9-2281-4b66-8000-8ed8bcc5d8fb
 - Real-time booking status and chat over WebSockets, with unread badges
 - Cached server data, so screens open instantly and refresh in the background
 - Professional dashboard with stats and a profile editor with live preview
-- Account deletion, Greek and English, dark and light mode, responsive UI
+- Liquid-glass interface in Greek and English, with dark and light mode, on any screen size
+- Account deletion that removes everything tied to the user
 
 ## Tech stack
 
