@@ -19,18 +19,20 @@
   --intro-center: #6b1426;
   --intro-bg: #1c0b10;
 }
+/* Dark: warm espresso with beige light and a muted burgundy, rather than black and red */
 [data-theme='dark'] {
-  --bg: #1c0b10;
+  --bg: #1a1411;
   color-scheme: dark;
-  --brand-gradient: linear-gradient(135deg, #c4284a 0%, var(--brand-c) 45%, #7a1028 100%);
-  --brand-glow: color-mix(in srgb, var(--brand-c) 85%, transparent);
-  /* The brand burgundy is too dim for text on dark backgrounds */
-  --text-gradient: linear-gradient(135deg, #f5c2cd 0%, #f3d9bd 100%);
+  --brand-c: #9a3346;
+  --brand-gradient: linear-gradient(135deg, #a8384e 0%, #8c2c3f 45%, #6c2030 100%);
+  --brand-glow: color-mix(in srgb, #8c2c3f 70%, transparent);
+  /* Burgundy is too dim for text on dark backgrounds, so accents turn beige */
+  --text-gradient: linear-gradient(135deg, #f1dcc2 0%, #dcb48a 100%);
   --page-bg:
-    radial-gradient(600px circle at 94% 4%, rgba(176, 33, 63, 0.48), rgba(176, 33, 63, 0) 70%),
-    radial-gradient(520px circle at 2% 96%, rgba(160, 100, 60, 0.26), rgba(160, 100, 60, 0) 70%),
-    radial-gradient(440px circle at 58% 58%, rgba(200, 160, 110, 0.1), rgba(200, 160, 110, 0) 70%),
-    linear-gradient(160deg, #1c0b10 0%, #2a0f1a 60%, #1a0a0e 100%);
+    radial-gradient(600px circle at 94% 4%, rgba(140, 44, 63, 0.26), rgba(140, 44, 63, 0) 70%),
+    radial-gradient(560px circle at 2% 96%, rgba(196, 150, 96, 0.2), rgba(196, 150, 96, 0) 70%),
+    radial-gradient(480px circle at 58% 58%, rgba(226, 190, 150, 0.06), rgba(226, 190, 150, 0) 70%),
+    linear-gradient(160deg, #1f1814 0%, #251c17 60%, #17110e 100%);
 }
 
 * { box-sizing: border-box; }

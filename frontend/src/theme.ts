@@ -4,11 +4,12 @@ import { createTheme } from '@mui/material'
 // Plain-CSS uses of these colors (backdrop, gradients, intro) live as custom properties in index.css.
 export const BRAND = {
   burgundy: '#8c1631',
-  burgundyLight: '#f5c2cd',
+  // Dark mode's accent: a warm beige that reads on espresso
+  burgundyLight: '#e8c9a7',
   sand: '#8a5a30',
   sandLight: '#f3d9bd',
   bgLight: '#f3e8dc',
-  bgDark: '#1c0b10',
+  bgDark: '#1a1411',
 }
 
 // The serif used for the wordmark
@@ -28,8 +29,8 @@ type Surface = 'glass' | 'overlay' | 'solid'
 
 const FILL: Record<Surface, [light: string, dark: string]> = {
   glass: ['linear-gradient(180deg, rgba(255, 255, 255, 0.46), rgba(255, 255, 255, 0.22))', 'linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.04))'],
-  overlay: ['linear-gradient(180deg, rgba(253, 249, 242, 0.95), rgba(250, 243, 233, 0.92))', 'linear-gradient(180deg, rgba(52, 20, 30, 0.94), rgba(40, 15, 23, 0.94))'],
-  solid: ['linear-gradient(180deg, rgba(253, 250, 244, 0.97), rgba(250, 244, 235, 0.95))', 'linear-gradient(180deg, rgba(48, 19, 28, 0.97), rgba(38, 14, 22, 0.97))'],
+  overlay: ['linear-gradient(180deg, rgba(253, 249, 242, 0.95), rgba(250, 243, 233, 0.92))', 'linear-gradient(180deg, rgba(48, 38, 32, 0.95), rgba(38, 30, 25, 0.95))'],
+  solid: ['linear-gradient(180deg, rgba(253, 250, 244, 0.97), rgba(250, 244, 235, 0.95))', 'linear-gradient(180deg, rgba(43, 34, 28, 0.97), rgba(35, 27, 22, 0.97))'],
 }
 
 // Every surface keeps the liquid-glass rim, so solid cards still match the floating glass
@@ -75,16 +76,16 @@ export function buildTheme(mode: 'light' | 'dark', reduceTransparency = false) {
     palette: {
       mode,
       // In dark mode the accent is a light rose, so anything drawn on it needs dark text
-      primary: { main: dark ? BRAND.burgundyLight : BRAND.burgundy, contrastText: dark ? '#3d0b16' : '#ffffff' },
+      primary: { main: dark ? BRAND.burgundyLight : BRAND.burgundy, contrastText: dark ? '#2a1a12' : '#ffffff' },
       secondary: { main: dark ? BRAND.sandLight : BRAND.sand },
       info: { main: dark ? BRAND.sandLight : BRAND.sand },
       success: { main: dark ? '#86efac' : '#15803d' },
       warning: { main: dark ? '#fcd34d' : '#b45309' },
       error: { main: dark ? '#fca5a5' : '#c81e1e' },
-      background: { default: dark ? BRAND.bgDark : BRAND.bgLight, paper: dark ? '#2a1119' : '#fbf6ef' },
+      background: { default: dark ? BRAND.bgDark : BRAND.bgLight, paper: dark ? '#2b221c' : '#fbf6ef' },
       // Slightly deeper secondary text: some surfaces let the colorful backdrop through
-      text: dark ? { primary: '#f6ece8', secondary: '#d4c0bb' } : { primary: '#24101a', secondary: '#4d2a33' },
-      divider: dark ? 'rgba(245, 194, 205, 0.16)' : 'rgba(92, 13, 32, 0.14)',
+      text: dark ? { primary: '#f4ece4', secondary: '#cdbdae' } : { primary: '#24101a', secondary: '#4d2a33' },
+      divider: dark ? 'rgba(232, 201, 167, 0.16)' : 'rgba(92, 13, 32, 0.14)',
     },
     shape: { borderRadius: 4 }, // sx radius units are 4px
     typography: {
@@ -160,7 +161,7 @@ export function buildTheme(mode: 'light' | 'dark', reduceTransparency = false) {
             borderRadius: 18,
             backgroundColor: dark ? 'rgba(255, 255, 255, 0.07)' : 'rgba(255, 255, 255, 0.85)',
             boxShadow: dark ? 'inset 0 1px 2px rgba(0, 0, 0, 0.35)' : 'inset 0 1px 2px rgba(70, 8, 26, 0.1)',
-            '& .MuiOutlinedInput-notchedOutline': { borderColor: dark ? 'rgba(245, 194, 205, 0.2)' : 'rgba(255, 255, 255, 0.9)' },
+            '& .MuiOutlinedInput-notchedOutline': { borderColor: dark ? 'rgba(232, 201, 167, 0.2)' : 'rgba(255, 255, 255, 0.9)' },
           },
         },
       },
