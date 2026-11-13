@@ -6,16 +6,16 @@
   --sand: #c8a985;
   --brand-gradient: linear-gradient(135deg, #a3183a 0%, var(--brand-b) 45%, var(--brand-a) 100%);
   --brand-glow: color-mix(in srgb, var(--brand-b) 75%, transparent);
-  --text-gradient: linear-gradient(135deg, #8c1631 0%, #b0213f 55%, #b8692f 100%);
-  --bg: #f4e0d4;
+  --text-gradient: linear-gradient(135deg, #8c1631 0%, #6b1426 55%, #8a5a30 100%);
+  --bg: #f3e8dc;
   /* Native scrollbars and form controls follow the theme */
   color-scheme: light;
-  /* A still backdrop for the glass to show through: soft burgundy, sand and rose spheres on warm beige */
+  /* A still backdrop for the glass to show through: linen beige, burgundy light from the top right, sand from the bottom left */
   --page-bg:
-    radial-gradient(560px circle at 94% 4%, rgba(176, 33, 63, 0.36), rgba(176, 33, 63, 0) 70%),
-    radial-gradient(520px circle at 2% 96%, rgba(214, 150, 92, 0.34), rgba(214, 150, 92, 0) 70%),
-    radial-gradient(420px circle at 58% 58%, rgba(232, 128, 156, 0.16), rgba(232, 128, 156, 0) 70%),
-    linear-gradient(135deg, #f7e7da 0%, #f2d6cf 55%, #e9c2c3 100%);
+    radial-gradient(560px circle at 94% 4%, rgba(140, 22, 49, 0.24), rgba(140, 22, 49, 0) 70%),
+    radial-gradient(520px circle at 2% 96%, rgba(196, 150, 96, 0.32), rgba(196, 150, 96, 0) 70%),
+    radial-gradient(460px circle at 58% 58%, rgba(107, 20, 38, 0.06), rgba(107, 20, 38, 0) 70%),
+    linear-gradient(135deg, #f7efe4 0%, #f1e4d3 55%, #e8d5bf 100%);
   --intro-center: #6b1426;
   --intro-bg: #1c0b10;
 }
@@ -29,7 +29,7 @@
   --page-bg:
     radial-gradient(600px circle at 94% 4%, rgba(176, 33, 63, 0.48), rgba(176, 33, 63, 0) 70%),
     radial-gradient(520px circle at 2% 96%, rgba(160, 100, 60, 0.26), rgba(160, 100, 60, 0) 70%),
-    radial-gradient(440px circle at 58% 58%, rgba(196, 42, 78, 0.16), rgba(196, 42, 78, 0) 70%),
+    radial-gradient(440px circle at 58% 58%, rgba(200, 160, 110, 0.1), rgba(200, 160, 110, 0) 70%),
     linear-gradient(160deg, #1c0b10 0%, #2a0f1a 60%, #1a0a0e 100%);
 }
 

@@ -7,7 +7,7 @@ export const BRAND = {
   burgundyLight: '#f5c2cd',
   sand: '#8a5a30',
   sandLight: '#f3d9bd',
-  bgLight: '#f4e0d4',
+  bgLight: '#f3e8dc',
   bgDark: '#1c0b10',
 }
 
@@ -28,13 +28,13 @@ type Surface = 'glass' | 'overlay' | 'solid'
 
 const FILL: Record<Surface, [light: string, dark: string]> = {
   glass: ['linear-gradient(180deg, rgba(255, 255, 255, 0.46), rgba(255, 255, 255, 0.22))', 'linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.04))'],
-  overlay: ['linear-gradient(180deg, rgba(255, 250, 246, 0.94), rgba(255, 246, 240, 0.9))', 'linear-gradient(180deg, rgba(52, 20, 30, 0.94), rgba(40, 15, 23, 0.94))'],
-  solid: ['linear-gradient(180deg, rgba(255, 252, 250, 0.97), rgba(255, 248, 244, 0.95))', 'linear-gradient(180deg, rgba(48, 19, 28, 0.97), rgba(38, 14, 22, 0.97))'],
+  overlay: ['linear-gradient(180deg, rgba(253, 249, 242, 0.95), rgba(250, 243, 233, 0.92))', 'linear-gradient(180deg, rgba(52, 20, 30, 0.94), rgba(40, 15, 23, 0.94))'],
+  solid: ['linear-gradient(180deg, rgba(253, 250, 244, 0.97), rgba(250, 244, 235, 0.95))', 'linear-gradient(180deg, rgba(48, 19, 28, 0.97), rgba(38, 14, 22, 0.97))'],
 }
 
 // Every surface keeps the liquid-glass rim, so solid cards still match the floating glass
 export function liquidGlass(dark: boolean, surface: Surface = 'glass') {
-  const lens = surface === 'solid' ? 'none' : dark ? 'blur(10px) saturate(170%)' : 'blur(8px) saturate(190%) brightness(1.05)'
+  const lens = surface === 'solid' ? 'none' : dark ? 'blur(10px) saturate(170%)' : 'blur(8px) saturate(135%) brightness(1.04)'
   return {
     position: 'relative',
     isolation: 'isolate',
@@ -81,7 +81,7 @@ export function buildTheme(mode: 'light' | 'dark', reduceTransparency = false) {
       success: { main: dark ? '#86efac' : '#15803d' },
       warning: { main: dark ? '#fcd34d' : '#b45309' },
       error: { main: dark ? '#fca5a5' : '#c81e1e' },
-      background: { default: dark ? BRAND.bgDark : BRAND.bgLight, paper: dark ? '#2a1119' : '#fbf1ec' },
+      background: { default: dark ? BRAND.bgDark : BRAND.bgLight, paper: dark ? '#2a1119' : '#fbf6ef' },
       // Slightly deeper secondary text: some surfaces let the colorful backdrop through
       text: dark ? { primary: '#f6ece8', secondary: '#d4c0bb' } : { primary: '#24101a', secondary: '#4d2a33' },
       divider: dark ? 'rgba(245, 194, 205, 0.16)' : 'rgba(92, 13, 32, 0.14)',
