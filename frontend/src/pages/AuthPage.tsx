@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { useLayoutEffect, useRef, useState, type ReactNode, type SubmitEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { auth, errorMessage, saveSession } from '../api'
 import { useLang } from '../i18n'
@@ -105,7 +105,7 @@ function AuthCard({ onDone, suggestions }: { onDone: (role: string) => void; sug
   const [busy, setBusy] = useState(false)
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }))
 
-  const submit = async (e: FormEvent) => {
+  const submit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault(); setErr(''); setBusy(true)
     try {
       const res = tab === 0 ? await auth.login(form)

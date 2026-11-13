@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useState, type SubmitEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { api, clearSession, errorMessage } from '../api'
@@ -29,7 +29,7 @@ export default function ProfilePage() {
   const set = (k: keyof (Me & Provider), v: string | number | null) => setEdits(f => ({ ...f, [k]: v }))
   const shownErr = err || (profile.error ? errorMessage(profile.error) : '')
 
-  const save = async (e: FormEvent) => {
+  const save = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault(); setBusy(true); setErr('')
     try {
       const saved = await api<ProfileResponse>('/api/profile', { method: 'PUT', body: JSON.stringify(form) })
@@ -121,7 +121,7 @@ function DeleteAccount() {
 
   const close = () => { setOpen(false); setPassword(''); setErr('') }
 
-  const confirm = async (e: FormEvent) => {
+  const confirm = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault(); setBusy(true); setErr('')
     try {
       await api('/api/account', { method: 'DELETE', body: JSON.stringify({ password }) })

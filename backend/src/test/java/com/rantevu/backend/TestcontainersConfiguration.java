@@ -17,6 +17,7 @@ public class TestcontainersConfiguration {
 
     @Bean
     @ServiceConnection(name = "redis")
+    @SuppressWarnings("resource") // a container bean is stopped by Spring when the test context closes
     GenericContainer<?> redis() {
         return new GenericContainer<>("redis:7-alpine").withExposedPorts(6379);
     }
