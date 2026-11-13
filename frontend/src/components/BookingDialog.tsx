@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Alert, Box, Button, Chip, CircularProgress, Dialog, DialogActions, DialogContent, IconButton, TextField, Typography } from '@mui/material'
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
-import { api, errorMessage } from '../api'
+import { errorMessage } from '../api'
+import { NONE, useBookAppointment, useBusySlots } from '../queries'
 import type { Provider } from '../types'
 import { useLang } from '../i18n'
 import { PersonAvatar } from './ui'
@@ -19,32 +20,22 @@ export default function BookingDialog({ provider, onClose, onBooked }: { provide
   const [time, setTime] = useState('')
   const [notes, setNotes] = useState('')
   const [err, setErr] = useState('')
-  const [sending, setSending] = useState(false)
-
-  const [busy, setBusySlots] = useState<string[]>([])
+  const book = useBookAppointment()
+  const sending = book.isPending
 
   // Slots other clients already hold for this provider on the chosen day
-  useEffect(() => {
-    if (!provider || !date) return
-    let stale = false
-    api<string[]>(`/api/providers/${provider.userId}/busy?date=${date}`).then(b => { if (!stale) setBusySlots(b) }).catch(() => {})
-    return () => { stale = true }
-  }, [provider, date])
+  const busy = useBusySlots(provider?.userId, date).data ?? NONE
 
   const isPast = (slot: string) => new Date(`${date}T${slot}`) <= new Date()
   const isTaken = (slot: string) => busy.includes(slot)
 
-  const submit = async () => {
+  const submit = () => {
     if (!provider) return
-    setSending(true); setErr('')
-    try {
-      await api('/api/appointments', { method: 'POST', body: JSON.stringify({ providerId: provider.userId, appointmentDate: `${date}T${time}`, notes }) })
-      onBooked()
-    } catch (e) {
-      setErr(errorMessage(e))
-      // Someone may have just taken this slot: refresh the list
-      api(`/api/providers/${provider.userId}/busy?date=${date}`).then(setBusySlots).catch(() => {})
-    } finally { setSending(false) }
+    setErr('')
+    book.mutate({ providerId: provider.userId, appointmentDate: `${date}T${time}`, notes }, {
+      onSuccess: onBooked,
+      onError: e => setErr(errorMessage(e)),
+    })
   }
 
   return (

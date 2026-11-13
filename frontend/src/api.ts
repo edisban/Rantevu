@@ -1,4 +1,5 @@
 import type { AuthResponse } from './types'
+import { queryClient } from './queryClient'
 
 type Options = { method?: string; body?: string; headers?: Record<string, string> }
 
@@ -50,6 +51,7 @@ export const errorMessage = (e: unknown) => (e instanceof Error ? e.message : St
 export const isSignedIn = () => !!localStorage.getItem('role')
 
 export function saveSession(res: AuthResponse) {
+  queryClient.clear() // never show one account's cached data to the next
   localStorage.removeItem('token') // left over from before the cookie-based login
   localStorage.setItem('role', res.role)
   localStorage.setItem('userId', String(res.userId))
@@ -57,6 +59,7 @@ export function saveSession(res: AuthResponse) {
 }
 
 export function clearSession() {
+  queryClient.clear()
   for (const k of ['token', 'role', 'userId', 'fullName']) localStorage.removeItem(k)
 }
 

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { api, errorMessage } from '../api'
-import type { Appointment, Provider } from '../types'
+import { errorMessage } from '../api'
+import { NONE, useAppointments, useProviders, useSetAppointmentStatus } from '../queries'
+import type { Provider } from '../types'
 import { useLang } from '../i18n'
 import { CATEGORIES, categoryOf, normalize } from '../categories'
 import BookingDialog from '../components/BookingDialog'
@@ -20,8 +21,11 @@ import { delay } from '../style'
 
 export default function ClientDashboard() {
   const { t, lang, locale } = useLang()
-  const [providers, setProviders] = useState<Provider[] | null>(null)
-  const [appts, setAppts] = useState<Appointment[]>([])
+  const providersQuery = useProviders()
+  const apptsQuery = useAppointments()
+  const setStatus = useSetAppointmentStatus()
+  const providers = providersQuery.data ?? (providersQuery.isError ? NONE : null)
+  const appts = apptsQuery.data ?? NONE
   const [q, setQ] = useState('')
   const [cat, setCat] = useState<string | null>(null)
   const [booking, setBooking] = useState<Provider | null>(null)
@@ -32,17 +36,16 @@ export default function ClientDashboard() {
   const { onAppointment } = useChat()
   const me = Number(localStorage.getItem('userId'))
 
-  const loadAppts = () => api<Appointment[]>('/api/appointments/mine').then(setAppts).catch(e => setErr(errorMessage(e)))
+  const loadError = providersQuery.error ?? apptsQuery.error
+  const shownErr = err || (loadError ? errorMessage(loadError) : '')
+
   useEffect(() => {
-    api<Provider[]>('/api/providers').then(setProviders).catch(e => { setProviders([]); setErr(errorMessage(e)) })
-    loadAppts()
     // Clear the one-time message so a page refresh doesn't show it again
     if (location.state) nav(location.pathname, { replace: true, state: null })
   }, [])
 
-  // Live updates: refresh the list when the professional accepts, declines or cancels
+  // Live updates: the list refetches by itself (chat.tsx); here we only tell the user what changed
   useEffect(() => onAppointment(e => {
-    loadAppts()
     if (e.changedBy !== me) setToast(t('liveChanged', { name: e.appointment.provider.fullName, status: t(e.appointment.status) }))
   }), [onAppointment, t])
 
@@ -58,12 +61,10 @@ export default function ClientDashboard() {
   const upcoming = appts.filter(a => new Date(a.appointmentDate) >= now).reverse()
   const past = appts.filter(a => new Date(a.appointmentDate) < now)
 
-  const cancel = async (id: number) => {
-    try {
-      await api(`/api/appointments/${id}/status`, { method: 'PUT', body: JSON.stringify({ status: 'CANCELLED' }) })
-      setToast(t('updated')); loadAppts()
-    } catch (e) { setErr(errorMessage(e)) }
-  }
+  const cancel = (id: number) => setStatus.mutate({ id, status: 'CANCELLED' }, {
+    onSuccess: () => setToast(t('updated')),
+    onError: e => setErr(errorMessage(e)),
+  })
 
   const firstName = (localStorage.getItem('fullName') || '').split(' ')[0]
 
@@ -92,7 +93,7 @@ export default function ClientDashboard() {
             </Box>
           </Paper>
 
-          {err && <Alert severity="error" onClose={() => setErr('')} sx={{ mb: 2 }}>{t(err)}</Alert>}
+          {shownErr && <Alert severity="error" onClose={() => setErr('')} sx={{ mb: 2 }}>{t(shownErr)}</Alert>}
           {providers && <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontWeight: 600 }}>{t('found', { n: filtered.length })}</Typography>}
 
           {!providers && (
@@ -174,7 +175,7 @@ export default function ClientDashboard() {
         </Paper>
       </Box>
 
-      <BookingDialog key={booking?.userId ?? 'none'} provider={booking} onClose={() => setBooking(null)} onBooked={() => { setBooking(null); setToast(t('requestSent')); loadAppts() }} />
+      <BookingDialog key={booking?.userId ?? 'none'} provider={booking} onClose={() => setBooking(null)} onBooked={() => { setBooking(null); setToast(t('requestSent')) }} />
       <Snackbar open={!!toast} autoHideDuration={3000} onClose={() => setToast('')} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
         <Alert severity="success" variant="filled" onClose={() => setToast('')}>{toast}</Alert>
       </Snackbar>

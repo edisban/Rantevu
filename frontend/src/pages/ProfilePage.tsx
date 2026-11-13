@@ -1,6 +1,8 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { api, clearSession, errorMessage } from '../api'
+import { keys, useProfile } from '../queries'
 import type { Me, ProfileResponse, Provider } from '../types'
 import { useLang } from '../i18n'
 import { SPECIALTY_SUGGESTIONS, categoryOf } from '../categories'
@@ -16,20 +18,23 @@ import { delay } from '../style'
 export default function ProfilePage() {
   const { t, lang } = useLang()
   const isProvider = localStorage.getItem('role') === 'ROLE_PROVIDER'
-  const [form, setForm] = useState<Partial<Me & Provider>>({})
+  const profile = useProfile()
+  const queryClient = useQueryClient()
+  const [edits, setEdits] = useState<Partial<Me & Provider>>({})
   const [busy, setBusy] = useState(false)
   const nav = useNavigate()
   const [err, setErr] = useState('')
-  const set = (k: keyof (Me & Provider), v: string | number | null) => setForm(f => ({ ...f, [k]: v }))
-
-  useEffect(() => {
-    api<ProfileResponse>('/api/profile').then(d => setForm({ ...d.user, ...d.profile })).catch(e => setErr(errorMessage(e)))
-  }, [])
+  // The form shows the saved profile with the user's unsaved edits on top, so a background refetch never wipes what they typed
+  const form: Partial<Me & Provider> = { ...profile.data?.user, ...profile.data?.profile, ...edits }
+  const set = (k: keyof (Me & Provider), v: string | number | null) => setEdits(f => ({ ...f, [k]: v }))
+  const shownErr = err || (profile.error ? errorMessage(profile.error) : '')
 
   const save = async (e: FormEvent) => {
     e.preventDefault(); setBusy(true); setErr('')
     try {
-      await api('/api/profile', { method: 'PUT', body: JSON.stringify(form) })
+      const saved = await api<ProfileResponse>('/api/profile', { method: 'PUT', body: JSON.stringify(form) })
+      // The dashboard reads the same cache, so its "complete your profile" banner is right at once
+      queryClient.setQueryData(keys.profile, saved)
       // Back to the dashboard, which shows the confirmation
       nav(isProvider ? '/provider/dashboard' : '/client/dashboard', { state: { toast: 'saved' } })
     } catch (ex) { setErr(errorMessage(ex)); setBusy(false) }
@@ -46,7 +51,7 @@ export default function ProfilePage() {
 
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: isProvider ? '1fr 320px' : '1fr' }, gap: 3, alignItems: 'start' }}>
         <Paper className="reveal" style={delay(0.06)} sx={{ p: { xs: 3, sm: 4 } }}>
-          {err && <Alert severity="error" sx={{ mb: 2 }}>{t(err)}</Alert>}
+          {shownErr && <Alert severity="error" sx={{ mb: 2 }}>{t(shownErr)}</Alert>}
           <Box component="form" onSubmit={save} sx={{ display: 'flex', flexDirection: 'column', gap: 2.25 }}>
             {!isProvider && (
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2.25 }}>

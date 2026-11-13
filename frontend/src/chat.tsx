@@ -1,7 +1,9 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useLocation } from 'react-router-dom'
 import { Client } from '@stomp/stompjs'
+import { useQueryClient } from '@tanstack/react-query'
 import { api } from './api'
+import { keys } from './queries'
 import type { AppointmentEvent, ChatMessage } from './types'
 
 type Listener = (m: ChatMessage) => void
@@ -24,6 +26,7 @@ const Ctx = createContext<ChatCtx>(null!)
 export function ChatProvider({ children }: { children: ReactNode }) {
   useLocation() // re-check the session after sign in / sign out navigations
   const session = localStorage.getItem('userId')
+  const queryClient = useQueryClient()
   const [connected, setConnected] = useState(false)
   const [unread, setUnread] = useState(0)
   const listeners = useRef(new Set<Listener>())
@@ -50,6 +53,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         })
         client.subscribe('/user/queue/appointments', frame => {
           const e: AppointmentEvent = JSON.parse(frame.body)
+          // Whichever screen shows appointments or free times refetches them by itself
+          void queryClient.invalidateQueries({ queryKey: keys.appointments })
+          void queryClient.invalidateQueries({ queryKey: keys.busy })
           appointmentListeners.current.forEach(l => l(e))
         })
       },
@@ -59,7 +65,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     })
     client.activate()
     return () => { void client.deactivate(); setConnected(false) }
-  }, [session, refreshUnread])
+  }, [session, refreshUnread, queryClient])
 
   const onMessage = useCallback((l: Listener) => {
     listeners.current.add(l)

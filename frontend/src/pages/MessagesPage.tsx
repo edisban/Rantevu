@@ -1,4 +1,5 @@
-import { Fragment, useEffect, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 import { Alert, Badge, Box, ButtonBase, Chip, CircularProgress, Container, IconButton, Paper, TextField, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
@@ -8,6 +9,7 @@ import ForumRoundedIcon from '@mui/icons-material/ForumRounded'
 import ChatBubbleOutlineRoundedIcon from '@mui/icons-material/ChatBubbleOutlineRounded'
 import { api, errorMessage } from '../api'
 import { useChat } from '../chat'
+import { NONE, keys, useContacts, useThread } from '../queries'
 import { useLang } from '../i18n'
 import { EmptyState, PersonAvatar } from '../components/ui'
 import { formatTime } from '../format'
@@ -22,45 +24,45 @@ export default function MessagesPage() {
   const [params, setParams] = useSearchParams()
   const activeId = params.get('with') ? Number(params.get('with')) : null
 
-  const [contacts, setContacts] = useState<Contact[] | null>(null)
-  const [thread, setThread] = useState<ChatMessage[] | null>(null)
+  const queryClient = useQueryClient()
+  const contactsQuery = useContacts()
+  const threadQuery = useThread(activeId)
+  const contacts = contactsQuery.data ?? (contactsQuery.isError ? NONE : null)
+  const thread = activeId == null ? null : threadQuery.data ?? (threadQuery.isError ? NONE : null)
   const [draft, setDraft] = useState('')
   const [sending, setSending] = useState(false)
   const [err, setErr] = useState('')
+  const loadError = contactsQuery.error ?? threadQuery.error
+  const shownErr = err || (loadError ? errorMessage(loadError) : '')
   const scroller = useRef<HTMLDivElement>(null)
 
   const active = contacts?.find(c => c.userId === activeId) ?? null
   const select = (id: number | null) => setParams(id ? { with: String(id) } : {})
 
-  useEffect(() => {
-    api<Contact[]>('/api/messages/contacts').then(setContacts).catch(e => { setContacts([]); setErr(errorMessage(e)) })
-  }, [])
+  // Adds a message to a cached conversation once, whether it came from the socket or from our own POST
+  const addToThread = useCallback((peer: number, m: ChatMessage) =>
+    queryClient.setQueryData<ChatMessage[]>(keys.thread(peer), th => (th && !th.some(x => x.id === m.id) ? [...th, m] : th)),
+  [queryClient])
 
-  // Open a conversation: load history (which marks it read) and keep its messages out of the unread badge
+  // Keep the open conversation's messages out of the unread badge
   useEffect(() => {
     setOpenPeer(activeId)
-    if (activeId == null) { setThread(null); return }
-    let stale = false
-    setThread(null)
-    api<ChatMessage[]>(`/api/messages/${activeId}`)
-      .then(msgs => {
-        if (stale) return
-        setThread(msgs)
-        setContacts(cs => cs?.map(c => (c.userId === activeId ? { ...c, unread: 0 } : c)) ?? cs)
-        refreshUnread()
-      })
-      .catch(e => { if (!stale) { setThread([]); setErr(errorMessage(e)) } })
-    return () => { stale = true; setOpenPeer(null) }
-  }, [activeId, refreshUnread, setOpenPeer])
+    return () => setOpenPeer(null)
+  }, [activeId, setOpenPeer])
 
-  // Live updates: append to the open thread and refresh previews in the list
+  // Loading a conversation marks it read on the server: mirror that in the list and the badge
+  useEffect(() => {
+    if (activeId == null || !threadQuery.isSuccess) return
+    queryClient.setQueryData<Contact[]>(keys.contacts, cs => cs?.map(c => (c.userId === activeId ? { ...c, unread: 0 } : c)))
+    refreshUnread()
+  }, [activeId, threadQuery.isSuccess, threadQuery.dataUpdatedAt, queryClient, refreshUnread])
+
+  // Live updates: append to the conversation and refresh previews in the list
   useEffect(() => onMessage(m => {
     const other = m.senderId === me ? m.receiverId : m.senderId
-    if (other === activeId) {
-      setThread(th => (th && !th.some(x => x.id === m.id) ? [...th, m] : th))
-      if (m.senderId === other) void api(`/api/messages/${other}/read`, { method: 'PUT' }).catch(() => {})
-    }
-    setContacts(cs => {
+    addToThread(other, m)
+    if (other === activeId && m.senderId === other) void api(`/api/messages/${other}/read`, { method: 'PUT' }).catch(() => {})
+    queryClient.setQueryData<Contact[]>(keys.contacts, cs => {
       if (!cs) return cs
       const updated = cs.map(c => c.userId !== other ? c : {
         ...c, lastMessage: m.content, lastAt: m.createdAt, lastFromMe: m.senderId === me,
@@ -68,7 +70,7 @@ export default function MessagesPage() {
       })
       return [...updated].sort((a, b) => (b.lastAt ?? '').localeCompare(a.lastAt ?? ''))
     })
-  }), [onMessage, me, activeId])
+  }), [onMessage, me, activeId, queryClient, addToThread])
 
   useEffect(() => {
     const el = scroller.current
@@ -83,7 +85,7 @@ export default function MessagesPage() {
       const m = await api<ChatMessage>(`/api/messages/${activeId}`, { method: 'POST', body: JSON.stringify({ content }) })
       setDraft('')
       // The same message also arrives over the socket; the id check keeps it from showing twice
-      setThread(th => (th && !th.some(x => x.id === m.id) ? [...th, m] : th))
+      addToThread(activeId, m)
     } catch (e) { setErr(errorMessage(e)) } finally { setSending(false) }
   }
 
@@ -198,7 +200,7 @@ export default function MessagesPage() {
 
   return (
     <Container sx={{ pt: { xs: 3, md: 5 } }}>
-      {err && <Alert severity="error" onClose={() => setErr('')} sx={{ mb: 2 }}>{t(err)}</Alert>}
+      {shownErr && <Alert severity="error" onClose={() => setErr('')} sx={{ mb: 2 }}>{t(shownErr)}</Alert>}
       <Paper className="reveal" sx={{
         p: 0, overflow: 'hidden', height: { xs: 'calc(100dvh - 140px)', md: 'calc(100dvh - 190px)' }, minHeight: 480,
         display: 'grid', gridTemplateColumns: { xs: '1fr', md: '330px 1fr', xl: '380px 1fr' }, gridTemplateRows: 'minmax(0, 1fr)',

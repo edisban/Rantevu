@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { api, errorMessage } from '../api'
+import { errorMessage } from '../api'
 import { useChat } from '../chat'
-import type { Appointment, ProfileResponse, Provider } from '../types'
+import { NONE, useAppointments, useProfile, useSetAppointmentStatus } from '../queries'
 import { useLang } from '../i18n'
 import { DateBlock, EmptyState, PersonAvatar, StatTile, StatusChip } from '../components/ui'
 import { formatDateTime } from '../format'
@@ -21,8 +21,12 @@ import { delay } from '../style'
 
 export default function ProviderDashboard() {
   const { t, locale } = useLang()
-  const [appts, setAppts] = useState<Appointment[]>([])
-  const [profile, setProfile] = useState<Provider | null | undefined>(undefined)
+  const apptsQuery = useAppointments()
+  const profileQuery = useProfile()
+  const statusMutation = useSetAppointmentStatus()
+  const appts = apptsQuery.data ?? NONE
+  // undefined while loading, so the "complete your profile" banner doesn't flash
+  const profile = profileQuery.isError ? null : profileQuery.data?.profile
   const [tab, setTab] = useState(0)
   const location = useLocation()
   const nav = useNavigate()
@@ -32,28 +36,24 @@ export default function ProviderDashboard() {
   const { onAppointment } = useChat()
   const me = Number(localStorage.getItem('userId'))
 
-  const load = () => api<Appointment[]>('/api/appointments/mine').then(setAppts).catch(e => setErr(errorMessage(e)))
+  const shownErr = err || (apptsQuery.error ? errorMessage(apptsQuery.error) : '')
+
   useEffect(() => {
-    load()
-    api<ProfileResponse>('/api/profile').then(d => setProfile(d.profile)).catch(() => setProfile(null))
     // Clear the one-time message so a page refresh doesn't show it again
     if (location.state) nav(location.pathname, { replace: true, state: null })
   }, [])
 
-  // Live updates: new requests and cancellations appear without reloading
+  // Live updates: new requests and cancellations refetch by themselves (chat.tsx); here we only show a toast
   useEffect(() => onAppointment(e => {
-    load()
     if (e.changedBy === me) return
     const name = e.appointment.client.fullName
     setToast(e.appointment.status === 'PENDING' ? t('liveNew', { name }) : t('liveChanged', { name, status: t(e.appointment.status) }))
   }), [onAppointment, t])
 
-  const setStatus = async (id: number, status: string) => {
-    try {
-      await api(`/api/appointments/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) })
-      setToast('updated'); load()
-    } catch (e) { setErr(errorMessage(e)) }
-  }
+  const setStatus = (id: number, status: string) => statusMutation.mutate({ id, status }, {
+    onSuccess: () => setToast('updated'),
+    onError: e => setErr(errorMessage(e)),
+  })
 
   const now = new Date()
   const pending = appts.filter(a => a.status === 'PENDING' && new Date(a.appointmentDate) >= now)
@@ -80,7 +80,7 @@ export default function ProviderDashboard() {
           <strong>{t('completeProfile')}</strong> — {t('completeProfileDesc')}
         </Alert>
       )}
-      {err && <Alert severity="error" onClose={() => setErr('')} sx={{ mb: 3 }}>{t(err)}</Alert>}
+      {shownErr && <Alert severity="error" onClose={() => setErr('')} sx={{ mb: 3 }}>{t(shownErr)}</Alert>}
 
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 2, mb: 4 }}>
         <StatTile icon={<HourglassTopRoundedIcon />} label={t('statPending')} value={pending.length} color="#f59e0b" delay={0.05} />

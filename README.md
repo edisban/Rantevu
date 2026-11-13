@@ -11,6 +11,7 @@ https://github.com/user-attachments/assets/b31659f9-2281-4b66-8000-8ed8bcc5d8fb
 - Search and filter professionals by name, specialty, area or category
 - Book 30-minute slots, with double booking prevented at the database level
 - Real-time booking status and chat over WebSockets, with unread badges
+- Cached server data, so screens open instantly and refresh in the background
 - Professional dashboard with stats and a profile editor with live preview
 - Account deletion, Greek and English, dark and light mode, responsive UI
 
@@ -18,7 +19,7 @@ https://github.com/user-attachments/assets/b31659f9-2281-4b66-8000-8ed8bcc5d8fb
 
 | Layer | Technology |
 | --- | --- |
-| Frontend | React 19, TypeScript, Vite, Material UI, STOMP.js |
+| Frontend | React 19, TypeScript, Vite, Material UI, TanStack Query, STOMP.js |
 | Backend | Spring Boot 4 (Java 17), Spring Security, Spring Data JPA, Spring WebSocket |
 | Data | PostgreSQL 16 with Flyway; Redis for login rate limiting |
 | Infrastructure | Docker Compose, nginx |
@@ -60,7 +61,7 @@ flowchart LR
     S --> R[("Redis")]
 ```
 
-nginx serves the React build and proxies `/api` and `/ws` to Spring Boot, so the browser uses a single origin and CORS stays off. The backend is organised by feature (`auth`, `appointment`, `message`, `provider`, `user`, `security`), and responses use DTOs, never JPA entities.
+nginx serves the React build and proxies `/api` and `/ws` to Spring Boot, so the browser uses a single origin and CORS stays off. The backend is organised by feature (`auth`, `appointment`, `message`, `provider`, `user`, `security`), and responses use DTOs, never JPA entities. On the client, TanStack Query caches server data, and live WebSocket events invalidate the affected queries so every open screen refreshes itself.
 
 ## Security
 
