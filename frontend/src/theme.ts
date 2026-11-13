@@ -14,19 +14,32 @@ export const BRAND = {
 // The serif used for the wordmark
 export const SERIF = '"Fraunces", Georgia, serif'
 
-// Liquid glass, as opposed to frosted glass: only a little blur and boosted color, so the colorful
-// backdrop stays visible through it; a bright rim that is strongest at the corners and a soft glare
-// across the top give it the volume of a drop of glass.
-export function liquidGlass(dark: boolean, strong = false) {
-  const fill = dark
-    ? strong ? 'linear-gradient(180deg, rgba(52, 20, 30, 0.94), rgba(40, 15, 23, 0.94))' : 'linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.04))'
-    : strong ? 'linear-gradient(180deg, rgba(255, 250, 246, 0.94), rgba(255, 246, 240, 0.9))' : 'linear-gradient(180deg, rgba(255, 255, 255, 0.46), rgba(255, 255, 255, 0.22))'
-  const lens = dark ? 'blur(10px) saturate(170%)' : 'blur(8px) saturate(190%) brightness(1.05)'
+// <Paper variant="glass"> is the see-through surface for things that float (the header capsules)
+declare module '@mui/material/Paper' {
+  interface PaperPropsVariantOverrides { glass: true }
+}
+
+// How much of the backdrop a surface lets through:
+// - glass:   liquid glass for floating controls; little blur and boosted color, so the backdrop shows
+// - overlay: dialogs and menus; nearly opaque, still softly blurred
+// - solid:   content people read (cards, lists, forms); opaque and without backdrop-filter, which
+//            keeps text crisp and long lists cheap to scroll on slower phones
+type Surface = 'glass' | 'overlay' | 'solid'
+
+const FILL: Record<Surface, [light: string, dark: string]> = {
+  glass: ['linear-gradient(180deg, rgba(255, 255, 255, 0.46), rgba(255, 255, 255, 0.22))', 'linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.04))'],
+  overlay: ['linear-gradient(180deg, rgba(255, 250, 246, 0.94), rgba(255, 246, 240, 0.9))', 'linear-gradient(180deg, rgba(52, 20, 30, 0.94), rgba(40, 15, 23, 0.94))'],
+  solid: ['linear-gradient(180deg, rgba(255, 252, 250, 0.97), rgba(255, 248, 244, 0.95))', 'linear-gradient(180deg, rgba(48, 19, 28, 0.97), rgba(38, 14, 22, 0.97))'],
+}
+
+// Every surface keeps the liquid-glass rim, so solid cards still match the floating glass
+export function liquidGlass(dark: boolean, surface: Surface = 'glass') {
+  const lens = surface === 'solid' ? 'none' : dark ? 'blur(10px) saturate(170%)' : 'blur(8px) saturate(190%) brightness(1.05)'
   return {
     position: 'relative',
     isolation: 'isolate',
     backgroundColor: 'transparent',
-    backgroundImage: fill,
+    backgroundImage: FILL[surface][dark ? 1 : 0],
     backdropFilter: lens,
     WebkitBackdropFilter: lens,
     border: '1px solid transparent',
@@ -43,18 +56,20 @@ export function liquidGlass(dark: boolean, strong = false) {
       WebkitMaskComposite: 'xor',
       mask: 'linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0)',
     },
-    // The glare across the top
-    '&::after': {
+    // The glare across the top belongs to see-through glass; on an opaque card it reads as a stray box
+    '&::after': surface === 'solid' ? { display: 'none' } : {
       content: '""', position: 'absolute', left: '6%', right: '6%', top: 1, height: '40%', borderRadius: 'inherit', pointerEvents: 'none', zIndex: -1,
       background: `linear-gradient(180deg, rgba(255, 255, 255, ${dark ? 0.07 : 0.3}), rgba(255, 255, 255, 0))`,
     },
   } as const
 }
 
-export function buildTheme(mode: 'light' | 'dark') {
+// `reduceTransparency` follows the system setting of the same name: everything becomes solid
+export function buildTheme(mode: 'light' | 'dark', reduceTransparency = false) {
   const dark = mode === 'dark'
-  const glass = liquidGlass(dark)
-  const glassStrong = liquidGlass(dark, true)
+  const glass = liquidGlass(dark, reduceTransparency ? 'solid' : 'glass')
+  const overlay = liquidGlass(dark, reduceTransparency ? 'solid' : 'overlay')
+  const solid = liquidGlass(dark, 'solid')
 
   return createTheme({
     palette: {
@@ -67,7 +82,7 @@ export function buildTheme(mode: 'light' | 'dark') {
       warning: { main: dark ? '#fcd34d' : '#b45309' },
       error: { main: dark ? '#fca5a5' : '#c81e1e' },
       background: { default: dark ? BRAND.bgDark : BRAND.bgLight, paper: dark ? '#2a1119' : '#fbf1ec' },
-      // Slightly deeper secondary text than before: the glass lets more color through
+      // Slightly deeper secondary text: some surfaces let the colorful backdrop through
       text: dark ? { primary: '#f6ece8', secondary: '#d4c0bb' } : { primary: '#24101a', secondary: '#4d2a33' },
       divider: dark ? 'rgba(245, 194, 205, 0.16)' : 'rgba(92, 13, 32, 0.14)',
     },
@@ -85,7 +100,8 @@ export function buildTheme(mode: 'light' | 'dark') {
     components: {
       MuiPaper: {
         defaultProps: { elevation: 0 },
-        styleOverrides: { root: { borderRadius: 24, ...glass } },
+        // Solid by default (cards, lists, forms); <Paper variant="glass"> for floating controls
+        styleOverrides: { root: { borderRadius: 24, ...solid, variants: [{ props: { variant: 'glass' }, style: glass }] } },
       },
       // Pages fill the window up to 1536px (MUI's xl), so huge screens don't stretch content too far;
       // side padding grows with the screen so content never touches the edges
@@ -100,9 +116,9 @@ export function buildTheme(mode: 'light' | 'dark') {
       },
       MuiCard: { defaultProps: { elevation: 0 }, styleOverrides: { root: { borderRadius: 24 } } },
       // Overlays sit on busy content, so they use the denser glass to stay readable
-      MuiDialog: { styleOverrides: { paper: { ...glassStrong, borderRadius: 28 } } },
-      MuiMenu: { styleOverrides: { paper: glassStrong } },
-      MuiAutocomplete: { styleOverrides: { paper: glassStrong } },
+      MuiDialog: { styleOverrides: { paper: { ...overlay, borderRadius: 28 } } },
+      MuiMenu: { styleOverrides: { paper: overlay } },
+      MuiAutocomplete: { styleOverrides: { paper: overlay } },
       MuiBackdrop: {
         styleOverrides: {
           root: { '&:not(.MuiBackdrop-invisible)': { backgroundColor: 'rgba(28, 11, 16, 0.45)', backdropFilter: 'blur(4px)' } },
@@ -142,9 +158,8 @@ export function buildTheme(mode: 'light' | 'dark') {
         styleOverrides: {
           root: {
             borderRadius: 18,
-            backgroundColor: dark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.55)',
+            backgroundColor: dark ? 'rgba(255, 255, 255, 0.07)' : 'rgba(255, 255, 255, 0.85)',
             boxShadow: dark ? 'inset 0 1px 2px rgba(0, 0, 0, 0.35)' : 'inset 0 1px 2px rgba(70, 8, 26, 0.1)',
-            backdropFilter: 'blur(8px) saturate(160%)',
             '& .MuiOutlinedInput-notchedOutline': { borderColor: dark ? 'rgba(245, 194, 205, 0.2)' : 'rgba(255, 255, 255, 0.9)' },
           },
         },

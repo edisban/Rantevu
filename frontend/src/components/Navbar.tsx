@@ -71,7 +71,7 @@ export default function Navbar() {
       },
     }}>
       <Container sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.75, sm: 1.5 } }}>
-        <Paper component={Link} to={loggedIn ? dashboard : '/'} aria-label="Rendezvous"
+        <Paper variant="glass" component={Link} to={loggedIn ? dashboard : '/'} aria-label="Rendezvous"
           sx={{ textDecoration: 'none', mr: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', height: { xs: 48, sm: 56 }, minWidth: { xs: 48, sm: 0 }, px: { xs: 0, sm: 3 }, borderRadius: 999 }}>
           {/* The full wordmark doesn't fit next to the menu on phones: show the mark there */}
           <Box sx={{ display: { xs: 'none', sm: 'flex' } }}><Logo /></Box>
@@ -79,7 +79,7 @@ export default function Navbar() {
         </Paper>
 
         {loggedIn && (
-          <Paper component="nav" ref={menu} onMouseLeave={backToCurrent} onBlur={backToCurrent}
+          <Paper variant="glass" component="nav" ref={menu} onMouseLeave={backToCurrent} onBlur={backToCurrent}
             sx={{ display: 'flex', alignItems: 'center', p: { xs: 0.5, sm: 0.75 }, borderRadius: 999 }}>
             <NavItem to={dashboard} onHover={moveLine} label={t('dashboard')} icon={<SpaceDashboardRoundedIcon />} active={pathname === dashboard} />
             <NavItem to="/messages" onHover={moveLine} label={t('messages')} icon={<ChatRoundedIcon />} active={pathname === '/messages'} count={unread} />
@@ -99,7 +99,7 @@ export default function Navbar() {
           </Paper>
         )}
 
-        <Paper sx={{ display: 'flex', alignItems: 'center', gap: 0.25, height: { xs: 48, sm: 56 }, px: 0.5, borderRadius: 999 }}>
+        <Paper variant="glass" sx={{ display: 'flex', alignItems: 'center', gap: 0.25, height: { xs: 48, sm: 56 }, px: 0.5, borderRadius: 999 }}>
           <Tooltip title={t('toggle') === 'EN' ? 'English' : 'Ελληνικά'}>
             <Button onClick={toggleLang} color="inherit" sx={{ minWidth: 40, px: 1, fontWeight: 700, color: 'text.secondary' }}>{t('toggle')}</Button>
           </Tooltip>

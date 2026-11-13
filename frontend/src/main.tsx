@@ -1,6 +1,6 @@
 import { StrictMode, useEffect, useMemo } from 'react'
 import { createRoot } from 'react-dom/client'
-import { ThemeProvider, CssBaseline } from '@mui/material'
+import { ThemeProvider, CssBaseline, useMediaQuery } from '@mui/material'
 import { QueryClientProvider } from '@tanstack/react-query'
 import App from './App.tsx'
 import { queryClient } from './queryClient'
@@ -11,7 +11,9 @@ import './index.css'
 
 function ThemedApp() {
   const { mode } = useThemeMode()
-  const theme = useMemo(() => buildTheme(mode), [mode])
+  // The system's "reduce transparency" setting turns every glass surface solid
+  const reduceTransparency = useMediaQuery('(prefers-reduced-transparency: reduce)')
+  const theme = useMemo(() => buildTheme(mode, reduceTransparency), [mode, reduceTransparency])
   // Plain CSS (backdrop, intro, gradients) switches its colors on this attribute
   useEffect(() => {
     document.documentElement.dataset.theme = mode
