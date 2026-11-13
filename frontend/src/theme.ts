@@ -15,13 +15,8 @@ export const BRAND = {
 // The serif used for the wordmark
 export const SERIF = '"Fraunces", Georgia, serif'
 
-// <Paper variant="glass"> is the see-through surface for things that float (the header capsules)
-declare module '@mui/material/Paper' {
-  interface PaperPropsVariantOverrides { glass: true }
-}
-
 // How much of the backdrop a surface lets through:
-// - glass:   liquid glass for floating controls; little blur and boosted color, so the backdrop shows
+// - glass:   liquid glass for small floating controls (outlined buttons); the backdrop shows through
 // - overlay: dialogs and menus; nearly opaque, still softly blurred
 // - solid:   content people read (cards, lists, forms); opaque and without backdrop-filter, which
 //            keeps text crisp and long lists cheap to scroll on slower phones
@@ -101,8 +96,8 @@ export function buildTheme(mode: 'light' | 'dark', reduceTransparency = false) {
     components: {
       MuiPaper: {
         defaultProps: { elevation: 0 },
-        // Solid by default (cards, lists, forms); <Paper variant="glass"> for floating controls
-        styleOverrides: { root: { borderRadius: 24, ...solid, variants: [{ props: { variant: 'glass' }, style: glass }] } },
+        // Cards, lists and forms are solid so their text stays crisp
+        styleOverrides: { root: { borderRadius: 24, ...solid } },
       },
       // Pages fill the window up to 1536px (MUI's xl), so huge screens don't stretch content too far;
       // side padding grows with the screen so content never touches the edges

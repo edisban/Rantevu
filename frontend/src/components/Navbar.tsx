@@ -1,5 +1,6 @@
 import { useCallback, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
-import { Box, Button, ButtonBase, Container, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Paper, Tooltip } from '@mui/material'
+import { Box, Button, ButtonBase, Container, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Tooltip } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import ChatRoundedIcon from '@mui/icons-material/ChatRounded'
 import { useChat } from '../chat'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
@@ -13,7 +14,7 @@ import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded'
 import SpaceDashboardRoundedIcon from '@mui/icons-material/SpaceDashboardRounded'
 import AccountCircleRoundedIcon from '@mui/icons-material/AccountCircleRounded'
 
-// A link in the header's glass capsule: the label on wider screens, just the icon on phones
+// A text link in the header: the label on wider screens, just the icon on phones
 function NavItem({ to, onClick, onHover, label, icon, active, count = 0 }:
   { to?: string; onClick?: () => void; onHover: (el: HTMLElement) => void; label: string; icon: ReactNode; active?: boolean; count?: number }) {
   const linkProps = to ? { component: Link, to } : { onClick }
@@ -21,7 +22,7 @@ function NavItem({ to, onClick, onHover, label, icon, active, count = 0 }:
     <ButtonBase {...linkProps} onMouseEnter={e => onHover(e.currentTarget)} onFocus={e => onHover(e.currentTarget)}
       aria-label={count > 0 ? `${label} (${count})` : label} aria-current={active ? 'page' : undefined}
       sx={{
-        position: 'relative', zIndex: 1, gap: 0.75, px: { xs: 0.75, sm: 2 }, minHeight: { xs: 40, sm: 44 }, borderRadius: 999, fontSize: 14, fontFamily: 'inherit',
+        gap: 0.75, px: { xs: 0.75, sm: 0.25 }, minHeight: 44, borderRadius: 2, fontSize: 14, fontFamily: 'inherit',
         fontWeight: active ? 700 : 500, color: active ? 'text.primary' : 'text.secondary',
         transition: 'color .2s ease', '&:hover': { color: 'text.primary' },
         '&.Mui-focusVisible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 },
@@ -49,7 +50,7 @@ export default function Navbar() {
   const dashboard = role === 'ROLE_PROVIDER' ? '/provider/dashboard' : '/client/dashboard'
   const logout = async () => { await signOut(); setConfirm(false); nav('/') }
 
-  // A glass droplet sits under the current page and slides to whichever item the pointer is on
+  // The underline sits under the current page and slides to whichever item the pointer is on
   const menu = useRef<HTMLElement>(null)
   const [line, setLine] = useState<{ left: number; width: number } | null>(null)
   const moveLine = useCallback((el: HTMLElement | null | undefined) => {
@@ -60,55 +61,47 @@ export default function Navbar() {
   useLayoutEffect(backToCurrent, [backToCurrent, pathname, lang, loggedIn, unread])
 
   return (
-    // Floating glass capsules instead of a full-width bar. Behind them, a blur that fades out downwards
-    // keeps scrolled content from showing sharply between the capsules.
-    <Box component="header" sx={{
-      position: 'sticky', top: 0, zIndex: 1100, isolation: 'isolate', pt: { xs: 1.5, md: 2 }, pb: { xs: 1, md: 1.5 },
-      '&::before': {
-        content: '""', position: 'absolute', inset: 0, bottom: -12, zIndex: -1, pointerEvents: 'none',
-        backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-        mask: 'linear-gradient(to bottom, #000 55%, transparent)', WebkitMask: 'linear-gradient(to bottom, #000 55%, transparent)',
-      },
-    }}>
-      <Container sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.75, sm: 1.5 } }}>
-        <Paper variant="glass" component={Link} to={loggedIn ? dashboard : '/'} aria-label="Rendezvous"
-          sx={{ textDecoration: 'none', mr: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', height: { xs: 48, sm: 56 }, minWidth: { xs: 48, sm: 0 }, px: { xs: 0, sm: 3 }, borderRadius: 999 }}>
+    // One full-width bar of frosted glass: the page shows softly through it as content scrolls underneath
+    <Box component="header" sx={theme => ({
+      position: 'sticky', top: 0, zIndex: 1100,
+      borderBottom: 1, borderColor: 'divider',
+      backgroundColor: alpha(theme.palette.background.default, 0.72),
+      backdropFilter: 'blur(16px) saturate(130%)', WebkitBackdropFilter: 'blur(16px) saturate(130%)',
+      boxShadow: theme.palette.mode === 'dark' ? '0 10px 30px -24px rgba(0, 0, 0, 0.9)' : '0 10px 30px -24px rgba(70, 30, 20, 0.45)',
+    })}>
+      <Container sx={{ minHeight: 72, display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1 } }}>
+        <Box component={Link} to={loggedIn ? dashboard : '/'} aria-label="Rendezvous" sx={{ textDecoration: 'none', mr: 'auto', display: 'flex', alignItems: 'center' }}>
           {/* The full wordmark doesn't fit next to the menu on phones: show the mark there */}
           <Box sx={{ display: { xs: 'none', sm: 'flex' } }}><Logo /></Box>
-          <Box sx={{ display: { xs: 'flex', sm: 'none' } }}><LogoMark size={30} /></Box>
-        </Paper>
+          <Box sx={{ display: { xs: 'flex', sm: 'none' } }}><LogoMark size={32} /></Box>
+        </Box>
 
         {loggedIn && (
-          <Paper variant="glass" component="nav" ref={menu} onMouseLeave={backToCurrent} onBlur={backToCurrent}
-            sx={{ display: 'flex', alignItems: 'center', p: { xs: 0.5, sm: 0.75 }, borderRadius: 999 }}>
+          <Box component="nav" ref={menu} onMouseLeave={backToCurrent} onBlur={backToCurrent}
+            sx={{ position: 'relative', display: 'flex', alignItems: 'center', gap: { xs: 0, sm: 3.5 }, mr: { xs: 0.5, sm: 2 } }}>
             <NavItem to={dashboard} onHover={moveLine} label={t('dashboard')} icon={<SpaceDashboardRoundedIcon />} active={pathname === dashboard} />
             <NavItem to="/messages" onHover={moveLine} label={t('messages')} icon={<ChatRoundedIcon />} active={pathname === '/messages'} count={unread} />
             <NavItem to="/profile" onHover={moveLine} label={t('profile')} icon={<AccountCircleRoundedIcon />} active={pathname === '/profile'} />
             <NavItem onClick={() => setConfirm(true)} onHover={moveLine} label={t('logout')} icon={<LogoutRoundedIcon />} />
-            <Box aria-hidden sx={theme => ({
-              position: 'absolute', left: 0, top: { xs: 4, sm: 6 }, bottom: { xs: 4, sm: 6 }, borderRadius: 999,
+            {/* Sits on the header's bottom border: (72px header - 44px items) / 2 below the menu */}
+            <Box aria-hidden sx={{
+              position: 'absolute', left: 0, bottom: -14, height: 3, borderRadius: 3, bgcolor: 'primary.main',
               width: line?.width ?? 0, transform: `translateX(${line?.left ?? 0}px)`, opacity: line ? 1 : 0,
-              background: theme.palette.mode === 'dark'
-                ? 'linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.08))'
-                : 'linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.55))',
-              boxShadow: theme.palette.mode === 'dark'
-                ? 'inset 0 1px 1px rgba(255, 255, 255, 0.3), 0 4px 12px -4px rgba(0, 0, 0, 0.6)'
-                : 'inset 0 1px 1px #fff, 0 4px 12px -4px rgba(70, 8, 26, 0.35)',
-              transition: 'transform .4s cubic-bezier(.3, 1.3, .5, 1), width .4s cubic-bezier(.3, 1.3, .5, 1), opacity .2s ease',
-            })} />
-          </Paper>
+              transition: 'transform .35s cubic-bezier(.3, 1.3, .5, 1), width .35s cubic-bezier(.3, 1.3, .5, 1), opacity .2s ease',
+            }} />
+          </Box>
         )}
 
-        <Paper variant="glass" sx={{ display: 'flex', alignItems: 'center', gap: 0.25, height: { xs: 48, sm: 56 }, px: 0.5, borderRadius: 999 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, pl: { sm: 2 }, borderLeft: { sm: 1 }, borderColor: { sm: 'divider' } }}>
           <Tooltip title={t('toggle') === 'EN' ? 'English' : 'Ελληνικά'}>
-            <Button onClick={toggleLang} color="inherit" sx={{ minWidth: 40, px: 1, fontWeight: 700, color: 'text.secondary' }}>{t('toggle')}</Button>
+            <Button onClick={toggleLang} color="inherit" sx={{ minWidth: 44, px: 1, fontWeight: 700, color: 'text.secondary' }}>{t('toggle')}</Button>
           </Tooltip>
-          <IconButton onClick={toggleTheme} aria-label="toggle theme" size="medium" sx={{ color: 'text.secondary', p: { xs: 1 } }}>
+          <IconButton onClick={toggleTheme} aria-label="toggle theme" sx={{ color: 'text.secondary' }}>
             {mode === 'dark' ? <LightModeRoundedIcon /> : <DarkModeRoundedIcon />}
           </IconButton>
-        </Paper>
+        </Box>
 
-        {!loggedIn && <Button component={Link} to="/auth" variant="contained" sx={{ height: 48 }}>{t('signIn')}</Button>}
+        {!loggedIn && <Button component={Link} to="/auth" variant="contained" sx={{ ml: 1 }}>{t('signIn')}</Button>}
       </Container>
 
       <Dialog open={confirm} onClose={() => setConfirm(false)} maxWidth="xs" fullWidth>
