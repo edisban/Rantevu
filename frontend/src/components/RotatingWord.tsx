@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-const STEP_MS = 2200
+const STEP_MS = 3000
 const SLIDE_MS = 600
 
 // Slides through the words one after another. The first word is repeated at the end, so the last

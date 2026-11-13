@@ -21,8 +21,8 @@ import RotatingWord from '../components/RotatingWord'
 
 // The professions the headline cycles through
 const HERO_WORDS = {
-  el: ['γιατρό', 'οδοντίατρο', 'φυσικοθεραπευτή', 'ψυχολόγο', 'δικηγόρο'],
-  en: ['doctor', 'dentist', 'physio', 'therapist', 'lawyer'],
+  el: ['γιατρό', 'οδοντίατρο', 'φυσικοθεραπευτή', 'ψυχολόγο', 'δικηγόρο', 'κτηνίατρο', 'δάσκαλο'],
+  en: ['doctor', 'dentist', 'physio', 'therapist', 'lawyer', 'vet', 'tutor'],
 }
 
 const dashboardFor = (role: string) => (role === 'ROLE_PROVIDER' ? '/provider/dashboard' : '/client/dashboard')
