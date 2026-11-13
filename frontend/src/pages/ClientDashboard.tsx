@@ -80,7 +80,7 @@ export default function ClientDashboard() {
           <Paper className="reveal" style={delay(0.06)} sx={{ p: 2, mb: 3 }}>
             <TextField fullWidth placeholder={t('searchPh')} value={q} onChange={e => setQ(e.target.value)}
               slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchRoundedIcon /></InputAdornment> } }} />
-            <Box sx={{ display: 'flex', gap: 1, mt: 2, overflowX: 'auto', pb: 0.5, scrollbarWidth: 'thin' }}>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 2 }}>
               <Chip icon={<AppsRoundedIcon />} label={t('all')} clickable onClick={() => setCat(null)} variant="outlined" sx={categoryChipSx('var(--brand-c)', cat === null)} />
               {CATEGORIES.map(c => {
                 const Icon = c.icon

@@ -5,6 +5,7 @@ const dict: Record<Lang, Record<string, string>> = {
   el: {
     home: 'Αρχική', dashboard: 'Πίνακας', login: 'Σύνδεση', register: 'Εγγραφή', logout: 'Αποσύνδεση',
     logoutConfirm: 'Θέλετε σίγουρα να αποσυνδεθείτε;', cancel: 'Άκυρο',
+    serverUnavailable: 'Ο server δεν είναι διαθέσιμος αυτή τη στιγμή. Δοκιμάστε ξανά σε λίγο.', requestFailed: 'Κάτι πήγε στραβά. Δοκιμάστε ξανά.',
     signIn: 'Σύνδεση', signUp: 'Εγγραφή', client: 'Πελάτης', provider: 'Επαγγελματίας',
     clientDesc: 'Κλείνω ραντεβού', providerDesc: 'Δέχομαι ραντεβού',
     username: 'Όνομα χρήστη', email: 'Email', password: 'Κωδικός πρόσβασης', fullName: 'Ονοματεπώνυμο',
@@ -63,6 +64,7 @@ const dict: Record<Lang, Record<string, string>> = {
   en: {
     home: 'Home', dashboard: 'Dashboard', login: 'Login', register: 'Register', logout: 'Logout',
     logoutConfirm: 'Are you sure you want to log out?', cancel: 'Cancel',
+    serverUnavailable: 'The server is not available right now. Please try again in a moment.', requestFailed: 'Something went wrong. Please try again.',
     signIn: 'Sign in', signUp: 'Sign up', client: 'Client', provider: 'Professional',
     clientDesc: 'I book appointments', providerDesc: 'I accept appointments',
     username: 'Username', email: 'Email', password: 'Password', fullName: 'Full name',

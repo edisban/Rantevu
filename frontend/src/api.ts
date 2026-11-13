@@ -40,10 +40,12 @@ export async function api<T = any>(path: string, opts: Options = {}): Promise<T>
     window.location.href = '/auth'
   }
   if (!res.ok) {
+    // Our API always answers errors as JSON with a message. Anything else (e.g. nginx's HTML page
+    // while the backend restarts) is never shown raw: the user gets a translated, readable message.
     const text = await res.text()
-    let message = text
-    try { message = JSON.parse(text).message || text } catch { /* plain text body */ }
-    throw new Error(message || res.statusText)
+    let message = ''
+    try { message = JSON.parse(text).message ?? '' } catch { /* not JSON */ }
+    throw new Error(message || (res.status >= 500 ? 'serverUnavailable' : 'requestFailed'))
   }
   return res.status === 204 ? (undefined as T) : res.json()
 }

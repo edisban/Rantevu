@@ -8,6 +8,8 @@
   --brand-glow: color-mix(in srgb, var(--brand-b) 75%, transparent);
   --text-gradient: linear-gradient(135deg, #8c1631 0%, #b0213f 55%, #b8692f 100%);
   --bg: #f4e4d8;
+  /* Native scrollbars and form controls follow the theme */
+  color-scheme: light;
   /* A still backdrop: burgundy light from the top right, warm sand from the bottom left */
   --page-bg:
     radial-gradient(1100px 640px at 100% 0%, rgba(140, 22, 49, 0.3), rgba(140, 22, 49, 0) 70%),
@@ -18,6 +20,7 @@
 }
 [data-theme='dark'] {
   --bg: #1c0b10;
+  color-scheme: dark;
   --brand-gradient: linear-gradient(135deg, #c4284a 0%, var(--brand-c) 45%, #7a1028 100%);
   --brand-glow: color-mix(in srgb, var(--brand-c) 85%, transparent);
   /* The brand burgundy is too dim for text on dark backgrounds */
