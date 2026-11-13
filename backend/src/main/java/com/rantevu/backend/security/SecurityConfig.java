@@ -12,6 +12,7 @@ import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfException;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy;
 import org.springframework.web.cors.CorsConfiguration;
@@ -41,11 +42,19 @@ public class SecurityConfig {
         return encoder;
     }
 
+    // Cookies on localhost are shared by every port, so other local apps' default "XSRF-TOKEN"
+    // would overwrite ours: give it a name of its own (readable by our JS, as the SPA pattern needs)
+    private static CookieCsrfTokenRepository csrfCookie() {
+        var repo = CookieCsrfTokenRepository.withHttpOnlyFalse();
+        repo.setCookieName(AuthCookies.CSRF_NAME);
+        return repo;
+    }
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, JwtAuthFilter jwt) throws Exception {
         // The auth cookie is sent automatically by the browser, so state-changing requests must
-        // also carry the CSRF token (XSRF-TOKEN cookie echoed back in the X-XSRF-TOKEN header)
-        http.csrf(c -> c.spa())
+        // also carry the CSRF token (rantevu_xsrf cookie echoed back in the X-XSRF-TOKEN header)
+        http.csrf(c -> c.spa().csrfTokenRepository(csrfCookie()))
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .headers(h -> h
                 .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'none'; frame-ancestors 'none'"))

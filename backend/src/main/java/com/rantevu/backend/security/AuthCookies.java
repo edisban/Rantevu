@@ -8,7 +8,10 @@ import java.time.Duration;
 // The JWT travels in an HttpOnly cookie: JavaScript (and so any XSS) cannot read it
 @Component
 public class AuthCookies {
-    public static final String NAME = "access_token";
+    // App-specific names: on localhost every port shares cookies, and a generic "access_token"
+    // set by another local app would be sent here instead of ours
+    public static final String NAME = "rantevu_session";
+    public static final String CSRF_NAME = "rantevu_xsrf";
 
     private final boolean secure;
     private final String sameSite;

@@ -2,6 +2,7 @@ package com.rantevu.backend.auth;
 
 import com.rantevu.backend.IntegrationTest;
 import com.rantevu.backend.security.AuthCookies;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -68,6 +69,16 @@ class AuthIntegrationTest extends IntegrationTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Password must be at least 8 characters and include a letter and a number"));
         }
+    }
+
+    @Test
+    void cookiesFromOtherLocalAppsDoNotSignTheUserOut() throws Exception {
+        // On localhost every port shares cookies: another app's generic "access_token" and
+        // "XSRF-TOKEN" arrive here too and must not be mistaken for ours
+        var me = client();
+        var foreign = new Cookie("access_token", "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.c2lnbmF0dXJl");
+        mvc.perform(get("/api/appointments/mine").cookie(foreign, me.cookie(), new Cookie("XSRF-TOKEN", "someone-else")))
+            .andExpect(status().isOk());
     }
 
     @Test

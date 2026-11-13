@@ -51,11 +51,11 @@ public abstract class IntegrationTest {
     }
 
     /**
-     * CSRF exactly as the browser does it: fetch the XSRF-TOKEN cookie from /api/auth/csrf,
+     * CSRF exactly as the browser does it: fetch the rantevu_xsrf cookie from /api/auth/csrf,
      * then send it back both as the cookie and in the X-XSRF-TOKEN header.
      */
     protected RequestPostProcessor xsrf() throws Exception {
-        Cookie token = mvc.perform(get("/api/auth/csrf")).andReturn().getResponse().getCookie("XSRF-TOKEN");
+        Cookie token = mvc.perform(get("/api/auth/csrf")).andReturn().getResponse().getCookie(AuthCookies.CSRF_NAME);
         return request -> {
             Cookie[] existing = request.getCookies() == null ? new Cookie[0] : request.getCookies();
             Cookie[] all = Arrays.copyOf(existing, existing.length + 1);

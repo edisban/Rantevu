@@ -10,10 +10,13 @@ const readCookie = (name: string) =>
 
 // The login token lives in an HttpOnly cookie the browser sends by itself (this code cannot read it).
 // Because of that, every state-changing request must prove it comes from our page: Spring Security
-// sets a readable XSRF-TOKEN cookie and expects its value back in the X-XSRF-TOKEN header.
+// sets a readable rantevu_xsrf cookie and expects its value back in the X-XSRF-TOKEN header.
+// (Cookies on localhost are shared by every port, so ours has an app-specific name.)
+const CSRF_COOKIE = 'rantevu_xsrf'
+
 async function csrfToken(refresh = false) {
-  if (refresh || !readCookie('XSRF-TOKEN')) await fetch('/api/auth/csrf', { credentials: 'same-origin' })
-  const value = readCookie('XSRF-TOKEN')
+  if (refresh || !readCookie(CSRF_COOKIE)) await fetch('/api/auth/csrf', { credentials: 'same-origin' })
+  const value = readCookie(CSRF_COOKIE)
   return value ? decodeURIComponent(value) : undefined
 }
 

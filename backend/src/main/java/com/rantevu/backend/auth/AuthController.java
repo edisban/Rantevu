@@ -36,7 +36,7 @@ public class AuthController {
         return ResponseEntity.noContent().header(HttpHeaders.SET_COOKIE, cookies.clear().toString()).build();
     }
 
-    // Reading the token makes Spring Security send the XSRF-TOKEN cookie the frontend echoes back
+    // Reading the token makes Spring Security send the rantevu_xsrf cookie the frontend echoes back
     @GetMapping("/csrf")
     public ResponseEntity<Void> csrf(CsrfToken token) {
         token.getToken();
