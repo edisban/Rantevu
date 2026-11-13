@@ -1,5 +1,6 @@
-import { useState } from 'react'
-import { Badge, Box, Button, Container, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Paper, Tooltip } from '@mui/material'
+import { useState, type ReactNode } from 'react'
+import { Box, Button, ButtonBase, Container, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Tooltip } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import ChatRoundedIcon from '@mui/icons-material/ChatRounded'
 import { useChat } from '../chat'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
@@ -9,17 +10,39 @@ import { isSignedIn, logout as signOut } from '../api'
 import Logo from './Logo'
 import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded'
 import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded'
-import TranslateRoundedIcon from '@mui/icons-material/TranslateRounded'
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded'
 import SpaceDashboardRoundedIcon from '@mui/icons-material/SpaceDashboardRounded'
 import AccountCircleRoundedIcon from '@mui/icons-material/AccountCircleRounded'
+
+// A text link in the header: the label on wider screens, just the icon on phones
+function NavItem({ to, onClick, label, icon, active, count = 0 }:
+  { to?: string; onClick?: () => void; label: string; icon: ReactNode; active?: boolean; count?: number }) {
+  const linkProps = to ? { component: Link, to } : { onClick }
+  return (
+    <ButtonBase {...linkProps} aria-label={count > 0 ? `${label} (${count})` : label} aria-current={active ? 'page' : undefined}
+      sx={{
+        gap: 0.75, px: { xs: 1, sm: 0.25 }, minHeight: 44, borderRadius: 2, fontSize: 14, fontFamily: 'inherit',
+        fontWeight: active ? 700 : 500, color: active ? 'text.primary' : 'text.secondary',
+        transition: 'color .2s ease', '&:hover': { color: 'text.primary' },
+        '&.Mui-focusVisible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 },
+      }}>
+      <Box component="span" sx={{ display: { xs: 'inline-flex', sm: 'none' } }}>{icon}</Box>
+      <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>{label}</Box>
+      {count > 0 && (
+        <Box component="span" sx={{ minWidth: 18, height: 18, px: 0.6, borderRadius: 9, display: 'grid', placeItems: 'center', fontSize: 11, fontWeight: 700, color: '#fff', background: 'var(--brand-gradient)' }}>
+          {count > 99 ? '99+' : count}
+        </Box>
+      )}
+    </ButtonBase>
+  )
+}
 
 export default function Navbar() {
   const { t, toggle: toggleLang } = useLang()
   const { mode, toggle: toggleTheme } = useThemeMode()
   const { unread } = useChat()
   const nav = useNavigate()
-  useLocation() // re-render on navigation so the logged-in state stays current
+  const { pathname } = useLocation() // re-render on navigation so the logged-in state stays current
   const [confirm, setConfirm] = useState(false)
   const loggedIn = isSignedIn()
   const role = localStorage.getItem('role')
@@ -27,38 +50,35 @@ export default function Navbar() {
   const logout = async () => { await signOut(); setConfirm(false); nav('/') }
 
   return (
-    <Box component="header" sx={{ position: 'sticky', top: 0, zIndex: 1100, pt: { xs: 1.5, md: 2 } }}>
-      <Container>
-        <Paper sx={{ px: { xs: 1.5, sm: 2.5 }, py: 1, borderRadius: 5, display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Box component={Link} to={loggedIn ? dashboard : '/'} sx={{ textDecoration: 'none', flexGrow: 1 }}><Logo /></Box>
+    <Box component="header" sx={theme => ({
+      position: 'sticky', top: 0, zIndex: 1100,
+      borderBottom: 1, borderColor: 'divider',
+      // Translucent so the page backdrop shows through as content scrolls underneath
+      backgroundColor: alpha(theme.palette.background.default, 0.7),
+      backdropFilter: 'blur(14px) saturate(140%)', WebkitBackdropFilter: 'blur(14px) saturate(140%)',
+    })}>
+      <Container sx={{ minHeight: 72, display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1 } }}>
+        <Box component={Link} to={loggedIn ? dashboard : '/'} aria-label="Rantevu" sx={{ textDecoration: 'none', mr: 'auto', display: 'flex' }}><Logo /></Box>
 
-          {loggedIn && (
-            <>
-              <Button component={Link} to={dashboard} color="inherit" startIcon={<SpaceDashboardRoundedIcon />} sx={{ display: { xs: 'none', sm: 'inline-flex' } }}>{t('dashboard')}</Button>
-              <Tooltip title={t('messages')}>
-                <Button component={Link} to="/messages" color="inherit" aria-label={t('messages')} sx={{ minWidth: 0, px: { xs: 1, sm: 1.5 } }}
-                  startIcon={<Badge color="error" badgeContent={unread} max={99}><ChatRoundedIcon /></Badge>}>
-                  <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>{t('messages')}</Box>
-                </Button>
-              </Tooltip>
-              <Button component={Link} to="/profile" color="inherit" startIcon={<AccountCircleRoundedIcon />} sx={{ display: { xs: 'none', sm: 'inline-flex' } }}>{t('profile')}</Button>
-            </>
-          )}
+        {loggedIn && (
+          <Box component="nav" sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0, sm: 3.5 }, mr: { xs: 0.5, sm: 2 } }}>
+            <NavItem to={dashboard} label={t('dashboard')} icon={<SpaceDashboardRoundedIcon />} active={pathname === dashboard} />
+            <NavItem to="/messages" label={t('messages')} icon={<ChatRoundedIcon />} active={pathname === '/messages'} count={unread} />
+            <NavItem to="/profile" label={t('profile')} icon={<AccountCircleRoundedIcon />} active={pathname === '/profile'} />
+            <NavItem onClick={() => setConfirm(true)} label={t('logout')} icon={<LogoutRoundedIcon />} />
+          </Box>
+        )}
 
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, pl: { sm: 2 }, borderLeft: { sm: 1 }, borderColor: { sm: 'divider' } }}>
           <Tooltip title={t('toggle') === 'EN' ? 'English' : 'Ελληνικά'}>
-            <Button onClick={toggleLang} color="inherit" startIcon={<TranslateRoundedIcon />} sx={{ minWidth: 0, px: 1.5 }}>{t('toggle')}</Button>
+            <Button onClick={toggleLang} color="inherit" sx={{ minWidth: 44, px: 1, fontWeight: 700, color: 'text.secondary' }}>{t('toggle')}</Button>
           </Tooltip>
-          <IconButton onClick={toggleTheme} color="inherit" aria-label="toggle theme">
+          <IconButton onClick={toggleTheme} aria-label="toggle theme" sx={{ color: 'text.secondary' }}>
             {mode === 'dark' ? <LightModeRoundedIcon /> : <DarkModeRoundedIcon />}
           </IconButton>
+        </Box>
 
-          {!loggedIn && <Button component={Link} to="/auth" variant="contained" sx={{ ml: 0.5 }}>{t('signIn')}</Button>}
-          {loggedIn && (
-            <Tooltip title={t('logout')}>
-              <IconButton onClick={() => setConfirm(true)} color="inherit" aria-label={t('logout')}><LogoutRoundedIcon /></IconButton>
-            </Tooltip>
-          )}
-        </Paper>
+        {!loggedIn && <Button component={Link} to="/auth" variant="contained" sx={{ ml: 1 }}>{t('signIn')}</Button>}
       </Container>
 
       <Dialog open={confirm} onClose={() => setConfirm(false)} maxWidth="xs" fullWidth>

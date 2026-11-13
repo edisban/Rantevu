@@ -70,7 +70,7 @@ test('a client books, the professional accepts live, and they chat', async ({ br
   await client.getByRole('link', { name: 'Message', exact: true }).click()
   await client.getByPlaceholder('Write a message…').fill('See you tomorrow!')
   await client.getByPlaceholder('Write a message…').press('Enter')
-  await expect(pro.locator('header .MuiBadge-badge')).toHaveText('1')
+  await expect(pro.getByRole('link', { name: 'Messages (1)' })).toBeVisible()
   await pro.getByRole('link', { name: 'Messages' }).click()
   await pro.getByRole('button', { name: new RegExp(clientName) }).click()
   await expect(pro.getByText('See you tomorrow!')).toBeVisible()

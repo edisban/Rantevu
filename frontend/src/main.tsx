@@ -12,7 +12,7 @@ import './index.css'
 function ThemedApp() {
   const { mode } = useThemeMode()
   const theme = useMemo(() => buildTheme(mode), [mode])
-  // Plain CSS (aurora, intro, gradients) switches its colors on this attribute
+  // Plain CSS (backdrop, intro, gradients) switches its colors on this attribute
   useEffect(() => {
     document.documentElement.dataset.theme = mode
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', mode === 'dark' ? BRAND.bgDark : BRAND.bgLight)

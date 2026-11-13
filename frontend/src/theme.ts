@@ -1,36 +1,41 @@
 import { createTheme } from '@mui/material'
 
-// Brand: a deep cherry burgundy (in the spirit of the iPhone 18 Pro "Burgundy") on warm beige.
-// Plain-CSS uses of these colors (aurora, gradients, intro) live as custom properties in index.css.
+// Brand: a vivid burgundy (in the spirit of the iPhone 18 Pro "Burgundy") on warm beige.
+// Plain-CSS uses of these colors (backdrop, gradients, intro) live as custom properties in index.css.
 export const BRAND = {
-  burgundy: '#6b1426',
-  burgundyLight: '#f1b6c2',
-  sand: '#8a6a48',
-  sandLight: '#e8d3b7',
-  bgLight: '#f4ede3',
-  bgDark: '#120a0c',
+  burgundy: '#8c1631',
+  burgundyLight: '#f5c2cd',
+  sand: '#8a5a30',
+  sandLight: '#f3d9bd',
+  bgLight: '#f4e4d8',
+  bgDark: '#1c0b10',
 }
+
+// The serif used for the wordmark
+export const SERIF = '"Fraunces", Georgia, serif'
 
 export function buildTheme(mode: 'light' | 'dark') {
   const dark = mode === 'dark'
-  const glass = dark ? 'rgba(36, 15, 21, 0.55)' : 'rgba(255, 252, 248, 0.62)'
-  const glassStrong = dark ? 'rgba(36, 15, 21, 0.92)' : 'rgba(255, 252, 248, 0.92)'
-  const border = dark ? 'rgba(232, 211, 183, 0.14)' : 'rgba(255, 255, 255, 0.9)'
-  const shadow = dark ? '0 10px 40px -10px rgba(0, 0, 0, 0.6)' : '0 10px 40px -12px rgba(74, 20, 34, 0.2)'
-  const blur = 'blur(20px) saturate(160%)'
+  // Quiet glass: mostly opaque panels with a light blur, so text stays crisp over the colored backdrop
+  const glass = dark ? 'rgba(52, 20, 30, 0.62)' : 'rgba(255, 250, 246, 0.78)'
+  const glassStrong = dark ? 'rgba(40, 15, 23, 0.96)' : 'rgba(255, 250, 246, 0.96)'
+  const border = dark ? 'rgba(245, 194, 205, 0.14)' : 'rgba(255, 255, 255, 0.92)'
+  const shadow = dark ? '0 12px 34px -18px rgba(0, 0, 0, 0.75)' : '0 10px 30px -18px rgba(92, 13, 32, 0.5)'
+  const blur = 'blur(14px) saturate(140%)'
 
   return createTheme({
     palette: {
       mode,
-      primary: { main: dark ? BRAND.burgundyLight : BRAND.burgundy, contrastText: '#ffffff' },
+      // In dark mode the accent is a light rose, so anything drawn on it needs dark text
+      primary: { main: dark ? BRAND.burgundyLight : BRAND.burgundy, contrastText: dark ? '#3d0b16' : '#ffffff' },
       secondary: { main: dark ? BRAND.sandLight : BRAND.sand },
       info: { main: dark ? BRAND.sandLight : BRAND.sand },
-      success: { main: dark ? '#4ade80' : '#16a34a' },
-      warning: { main: dark ? '#fbbf24' : '#b45309' },
-      error: { main: dark ? '#f87171' : '#dc2626' },
+      success: { main: dark ? '#86efac' : '#15803d' },
+      warning: { main: dark ? '#fcd34d' : '#b45309' },
+      error: { main: dark ? '#fca5a5' : '#c81e1e' },
       background: { default: dark ? BRAND.bgDark : BRAND.bgLight, paper: glass },
-      text: dark ? { primary: '#f3e9e4', secondary: '#b9a6a2' } : { primary: '#24151a', secondary: '#6f5d58' },
-      divider: dark ? 'rgba(232, 211, 183, 0.14)' : 'rgba(36, 21, 26, 0.09)',
+      text: dark ? { primary: '#f6ece8', secondary: '#cdb8b3' } : { primary: '#24151a', secondary: '#5e4a45' },
+      divider: dark ? 'rgba(245, 194, 205, 0.14)' : 'rgba(92, 13, 32, 0.14)',
     },
     shape: { borderRadius: 4 }, // sx radius units are 4px
     typography: {
@@ -46,7 +51,7 @@ export function buildTheme(mode: 'light' | 'dark') {
     components: {
       MuiPaper: {
         styleOverrides: {
-          root: { borderRadius: 18, backgroundImage: 'none', backgroundColor: glass, backdropFilter: blur, WebkitBackdropFilter: blur, border: `1px solid ${border}`, boxShadow: shadow },
+          root: { borderRadius: 14, backgroundImage: 'none', backgroundColor: glass, backdropFilter: blur, WebkitBackdropFilter: blur, border: `1px solid ${border}`, boxShadow: shadow },
         },
       },
       // Pages fill the window up to 1536px (MUI's xl), so huge screens don't stretch content too far;
@@ -60,20 +65,20 @@ export function buildTheme(mode: 'light' | 'dark') {
           }),
         },
       },
-      MuiCard: { defaultProps: { elevation: 0 }, styleOverrides: { root: { borderRadius: 22 } } },
-      MuiDialog: { styleOverrides: { paper: { backgroundColor: glassStrong, borderRadius: 24 } } },
+      MuiCard: { defaultProps: { elevation: 0 }, styleOverrides: { root: { borderRadius: 16 } } },
+      MuiDialog: { styleOverrides: { paper: { backgroundColor: glassStrong, borderRadius: 18 } } },
       MuiMenu: { styleOverrides: { paper: { backgroundColor: glassStrong } } },
       MuiAutocomplete: { styleOverrides: { paper: { backgroundColor: glassStrong } } },
       MuiBackdrop: {
         styleOverrides: {
-          root: { '&:not(.MuiBackdrop-invisible)': { backgroundColor: 'rgba(18, 8, 11, 0.45)', backdropFilter: 'blur(6px)' } },
+          root: { '&:not(.MuiBackdrop-invisible)': { backgroundColor: 'rgba(28, 11, 16, 0.5)', backdropFilter: 'blur(6px)' } },
         },
       },
       MuiButton: {
         defaultProps: { disableElevation: true },
         styleOverrides: {
           root: {
-            borderRadius: 12,
+            borderRadius: 10,
             paddingInline: 18,
             transition: 'transform .15s ease, filter .2s ease, box-shadow .2s ease',
             '&:active': { transform: 'scale(0.98)' },
@@ -85,21 +90,21 @@ export function buildTheme(mode: 'light' | 'dark') {
               '&.Mui-disabled': { opacity: 0.5, color: '#fff' },
             },
           },
-          outlined: { borderColor: border, backgroundColor: dark ? 'rgba(36, 15, 21, 0.35)' : 'rgba(255, 255, 255, 0.5)', backdropFilter: blur },
+          outlined: { borderColor: border, backgroundColor: dark ? 'rgba(52, 20, 30, 0.45)' : 'rgba(255, 250, 246, 0.6)', backdropFilter: blur },
         },
       },
       MuiOutlinedInput: {
         styleOverrides: {
           root: {
-            borderRadius: 14,
-            backgroundColor: dark ? 'rgba(18, 8, 11, 0.35)' : 'rgba(255, 255, 255, 0.7)',
-            '& .MuiOutlinedInput-notchedOutline': { borderColor: dark ? 'rgba(232, 211, 183, 0.2)' : 'rgba(36, 21, 26, 0.12)' },
+            borderRadius: 12,
+            backgroundColor: dark ? 'rgba(28, 11, 16, 0.45)' : 'rgba(255, 255, 255, 0.78)',
+            '& .MuiOutlinedInput-notchedOutline': { borderColor: dark ? 'rgba(245, 194, 205, 0.2)' : 'rgba(92, 13, 32, 0.16)' },
           },
         },
       },
-      MuiChip: { styleOverrides: { root: { fontWeight: 600, borderRadius: 10 } } },
+      MuiChip: { styleOverrides: { root: { fontWeight: 600, borderRadius: 8 } } },
       MuiTab: { styleOverrides: { root: { textTransform: 'none', fontWeight: 600, minHeight: 44 } } },
-      MuiAlert: { styleOverrides: { root: { borderRadius: 14, backdropFilter: blur } } },
+      MuiAlert: { styleOverrides: { root: { borderRadius: 12, backdropFilter: blur } } },
     },
   })
 }

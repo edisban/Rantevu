@@ -1,22 +1,31 @@
 :root {
-  /* Deep cherry burgundy on warm beige; keep in sync with BRAND in theme.ts */
-  --brand-a: #3f0a17;
-  --brand-b: #6b1426;
-  --brand-c: #93283f;
+  /* Vivid burgundy on warm beige; keep in sync with BRAND in theme.ts */
+  --brand-a: #5c0d20;
+  --brand-b: #8c1631;
+  --brand-c: #b0213f;
   --sand: #c8a985;
-  --brand-gradient: linear-gradient(135deg, var(--brand-a) 0%, var(--brand-b) 50%, var(--brand-c) 100%);
-  --brand-glow: color-mix(in srgb, var(--brand-c) 70%, transparent);
-  --text-gradient: linear-gradient(135deg, #6b1426 0%, #93283f 55%, #a87a55 100%);
-  --bg: #f4ede3;
-  --intro-center: #4a1020;
-  --intro-bg: #120a0c;
-  --blob-opacity: 0.42;
+  --brand-gradient: linear-gradient(135deg, #a3183a 0%, var(--brand-b) 45%, var(--brand-a) 100%);
+  --brand-glow: color-mix(in srgb, var(--brand-b) 75%, transparent);
+  --text-gradient: linear-gradient(135deg, #8c1631 0%, #b0213f 55%, #b8692f 100%);
+  --bg: #f4e4d8;
+  /* A still backdrop: burgundy light from the top right, warm sand from the bottom left */
+  --page-bg:
+    radial-gradient(1100px 640px at 100% 0%, rgba(140, 22, 49, 0.3), rgba(140, 22, 49, 0) 70%),
+    radial-gradient(900px 600px at 0% 100%, rgba(190, 120, 70, 0.28), rgba(190, 120, 70, 0) 70%),
+    linear-gradient(150deg, #f6e7d6 0%, #f0d3c6 55%, #e7b7b9 100%);
+  --intro-center: #6b1426;
+  --intro-bg: #1c0b10;
 }
 [data-theme='dark'] {
-  --bg: #120a0c;
+  --bg: #1c0b10;
+  --brand-gradient: linear-gradient(135deg, #c4284a 0%, var(--brand-c) 45%, #7a1028 100%);
+  --brand-glow: color-mix(in srgb, var(--brand-c) 85%, transparent);
   /* The brand burgundy is too dim for text on dark backgrounds */
-  --text-gradient: linear-gradient(135deg, #f1b6c2 0%, #e8d3b7 100%);
-  --blob-opacity: 0.32;
+  --text-gradient: linear-gradient(135deg, #f5c2cd 0%, #f3d9bd 100%);
+  --page-bg:
+    radial-gradient(1100px 680px at 100% 0%, rgba(176, 33, 63, 0.55), rgba(176, 33, 63, 0) 70%),
+    radial-gradient(900px 600px at 0% 100%, rgba(160, 100, 60, 0.26), rgba(160, 100, 60, 0) 70%),
+    linear-gradient(160deg, #1c0b10 0%, #26101a 60%, #1a0a0e 100%);
 }
 
 * { box-sizing: border-box; }
@@ -31,36 +40,14 @@ body { -webkit-font-smoothing: antialiased; transition: background-color 0.4s ea
   color: transparent;
 }
 
-/* ---------- Animated aurora background ---------- */
-.aurora {
+/* ---------- Page backdrop (fixed, so it stays put while the page scrolls) ---------- */
+.backdrop {
   position: fixed;
   inset: 0;
   z-index: 0;
-  overflow: hidden;
   pointer-events: none;
-}
-.aurora span {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(90px);
-  opacity: var(--blob-opacity);
-  animation: float 22s ease-in-out infinite alternate;
-}
-.aurora span:nth-child(1) { width: 46vw; height: 46vw; left: -12vw; top: -14vw; background: var(--brand-b); }
-.aurora span:nth-child(2) { width: 40vw; height: 40vw; right: -10vw; top: 8vh; background: var(--sand); animation-duration: 26s; animation-delay: -6s; }
-.aurora span:nth-child(3) { width: 34vw; height: 34vw; left: 30vw; bottom: -18vw; background: var(--brand-c); animation-duration: 30s; animation-delay: -12s; }
-.aurora::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(rgba(148, 163, 184, 0.18) 1px, transparent 1px);
-  background-size: 28px 28px;
-  mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%);
-}
-@keyframes float {
-  0% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(6vw, 4vh) scale(1.08); }
-  100% { transform: translate(-4vw, 8vh) scale(0.95); }
+  background: var(--page-bg);
+  transition: background 0.4s ease;
 }
 
 /* ---------- Entrance + hover helpers ---------- */

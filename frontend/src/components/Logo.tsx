@@ -1,6 +1,7 @@
 import { useId } from 'react'
-import { Box, Typography } from '@mui/material'
+import { Typography } from '@mui/material'
 import { delay } from '../style'
+import { SERIF } from '../theme'
 
 // Calendar-with-check mark. `animated` draws the strokes (used by the intro splash).
 export function LogoMark({ size = 36, animated = false }: { size?: number; animated?: boolean }) {
@@ -35,11 +36,11 @@ export function LogoMark({ size = 36, animated = false }: { size?: number; anima
   )
 }
 
+// Serif wordmark in the brand color (the calendar mark is kept for the intro and the favicon)
 export default function Logo() {
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
-      <LogoMark size={34} />
-      <Typography sx={{ fontWeight: 800, fontSize: 21, letterSpacing: '-0.03em', color: 'text.primary' }}>Rantevu</Typography>
-    </Box>
+    <Typography component="span" sx={{ fontFamily: SERIF, fontWeight: 600, fontSize: 26, lineHeight: 1, letterSpacing: '-0.01em', color: 'primary.main' }}>
+      Rantevu
+    </Typography>
   )
 }
