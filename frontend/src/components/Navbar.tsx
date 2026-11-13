@@ -69,7 +69,7 @@ export default function Navbar() {
       backdropFilter: 'blur(14px) saturate(140%)', WebkitBackdropFilter: 'blur(14px) saturate(140%)',
     })}>
       <Container sx={{ minHeight: 72, display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1 } }}>
-        <Box component={Link} to={loggedIn ? dashboard : '/'} aria-label="Rantevu" sx={{ textDecoration: 'none', mr: 'auto', display: 'flex' }}><Logo /></Box>
+        <Box component={Link} to={loggedIn ? dashboard : '/'} aria-label="Rendezvous" sx={{ textDecoration: 'none', mr: 'auto', display: 'flex' }}><Logo /></Box>
 
         {loggedIn && (
           <Box component="nav" ref={menu} onMouseLeave={backToCurrent} onBlur={backToCurrent}

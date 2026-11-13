@@ -1,8 +1,8 @@
-# Rantevu
+# Rendezvous
 
 [![CI/CD](https://github.com/edisban/Rantevu/actions/workflows/ci.yml/badge.svg)](https://github.com/edisban/Rantevu/actions/workflows/ci.yml)
 
-**Rantevu** (Greek for "appointment") is a full-stack booking platform. Clients find professionals (doctors, dentists, lawyers, trainers and more), book appointments and chat with them in real time. Professionals manage a public profile and accept or decline requests, which reach their dashboard the moment they're made.
+**Rendezvous** (French for a meeting or appointment) is a full-stack booking platform. Clients find professionals (doctors, dentists, lawyers, trainers and more), book appointments and chat with them in real time. Professionals manage a public profile and accept or decline requests, which reach their dashboard the moment they're made.
 
 https://github.com/user-attachments/assets/b31659f9-2281-4b66-8000-8ed8bcc5d8fb
 
@@ -85,7 +85,7 @@ End-to-end tests run against the running app; install the browser once with `npx
 
 ## CI/CD
 
-GitHub Actions runs on every push and pull request: backend tests, frontend lint, tests and build, then the Playwright suite against the full Docker stack. When everything passes on `main`, the images are published to GitHub Container Registry (`ghcr.io/edisban/rantevu-backend`, `ghcr.io/edisban/rantevu-frontend`). Dependabot opens weekly, grouped dependency updates that go through the same pipeline.
+GitHub Actions runs on every push and pull request: backend tests, frontend lint, tests and build, then the Playwright suite against the full Docker stack. When everything passes on `main`, the images are published to GitHub Container Registry (`ghcr.io/edisban/rendezvous-backend`, `ghcr.io/edisban/rendezvous-frontend`). Dependabot opens weekly, grouped dependency updates that go through the same pipeline.
 
 ## Project structure
 

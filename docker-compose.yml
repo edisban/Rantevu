@@ -1,13 +1,15 @@
 # Settings come from .env (see .env.example); the defaults below are for local development only
+# The project name sets the container names (rendezvous-db-1, ...) whatever the folder is called
+name: rendezvous
 services:
   db:
     image: postgres:16
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-rantevu}
-      POSTGRES_USER: ${POSTGRES_USER:-rantevu}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rantevu}
+      POSTGRES_DB: ${POSTGRES_DB:-rendezvous}
+      POSTGRES_USER: ${POSTGRES_USER:-rendezvous}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rendezvous}
     # No published port: only the backend reaches the database, over the internal Docker network.
-    # For a SQL shell: docker exec -it rantevu-db-1 psql -U rantevu -d rantevu
+    # For a SQL shell: docker exec -it rendezvous-db-1 psql -U rendezvous -d rendezvous
     volumes:
       - pgdata:/var/lib/postgresql/data
 
@@ -19,9 +21,9 @@ services:
     build: ./backend
     environment:
       REDIS_HOST: redis
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-rantevu}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-rantevu}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-rantevu}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-rendezvous}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-rendezvous}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-rendezvous}
       JWT_SECRET: ${JWT_SECRET:-dev-only-secret-change-me-in-production-0123456789}
       COOKIE_SECURE: ${COOKIE_SECURE:-false}  # true once served over HTTPS
       COOKIE_SAME_SITE: ${COOKIE_SAME_SITE:-Lax}

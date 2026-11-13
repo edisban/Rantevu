@@ -128,7 +128,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v6
         with:
-          images: ghcr.io/${{ github.repository_owner }}/rantevu-${{ matrix.app }}
+          images: ghcr.io/${{ github.repository_owner }}/rendezvous-${{ matrix.app }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=sha

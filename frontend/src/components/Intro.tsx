@@ -31,8 +31,8 @@ export default function Intro() {
     <div className={`intro${phase === 'leave' ? ' intro--leave' : ''}`} onClick={() => setPhase('leave')} role="presentation">
       <div className="intro__glow" />
       <div className="intro__mark"><LogoMark size={104} animated /></div>
-      <div className="intro__word" aria-label="Rantevu">
-        {'Rantevu'.split('').map((c, i) => <span key={i} style={{ animationDelay: `${0.75 + i * 0.06}s` }}>{c}</span>)}
+      <div className="intro__word" aria-label="Rendezvous">
+        {'Rendezvous'.split('').map((c, i) => <span key={i} style={{ animationDelay: `${0.75 + i * 0.06}s` }}>{c}</span>)}
       </div>
       <div className="intro__tag">{t('tagline')}</div>
       <div className="intro__bar" />

@@ -40,7 +40,7 @@ export function LogoMark({ size = 36, animated = false }: { size?: number; anima
 export default function Logo() {
   return (
     <Typography component="span" sx={{ fontFamily: SERIF, fontWeight: 600, fontSize: 26, lineHeight: 1, letterSpacing: '-0.01em', color: 'primary.main' }}>
-      Rantevu
+      Rendezvous
     </Typography>
   )
 }
