@@ -1,10 +1,8 @@
 # Rendezvous
 
-[![CI/CD](https://github.com/edisban/Rantevu/actions/workflows/ci.yml/badge.svg)](https://github.com/edisban/Rantevu/actions/workflows/ci.yml)
+[![CI/CD](https://github.com/edisban/Rentezvous/actions/workflows/ci.yml/badge.svg)](https://github.com/edisban/Rentezvous/actions/workflows/ci.yml)
 
 **Rendezvous** (French for a meeting or appointment) is a full-stack booking platform. Clients find professionals (doctors, dentists, lawyers, trainers and more), book appointments and chat with them in real time. Professionals manage a public profile and accept or decline requests, which reach their dashboard the moment they're made.
-
-https://github.com/user-attachments/assets/b31659f9-2281-4b66-8000-8ed8bcc5d8fb
 
 ## Features
 
@@ -31,8 +29,8 @@ https://github.com/user-attachments/assets/b31659f9-2281-4b66-8000-8ed8bcc5d8fb
 Requires [Docker](https://www.docker.com/products/docker-desktop/).
 
 ```bash
-git clone https://github.com/edisban/Rantevu.git
-cd Rantevu
+git clone https://github.com/edisban/Rentezvous.git
+cd Rentezvous
 docker compose up --build
 ```
 
